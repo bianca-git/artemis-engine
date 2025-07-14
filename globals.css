@@ -1,3 +1,11 @@
+/* Artemis custom styles */
+.artemis-title {
+  text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+}
+
+.text-magenta-400 {
+  color: #ff00ff;
+}
 /* Place your global styles here. You can import Tailwind or other CSS frameworks if needed. */
 body {
   margin: 0;
