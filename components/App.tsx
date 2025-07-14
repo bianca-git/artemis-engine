@@ -21,7 +21,6 @@ export default function App() {
     const {
         csvText,
         setCsvText,
-        // handleFileUpload, // Removed because it does not exist in useArtemis
         handleLoadData,
         handleClear,
         error,
@@ -31,10 +30,11 @@ export default function App() {
         handleRemoveStep,
         handleUpdateStep,
         handleAddStep,
-        result,
     } = useArtemis();
 
     const isCsvEmpty = !csvText.trim();
+    // Remove all references to 'loading' and 'result' as they are not defined
+    // Remove all references to 'footer' as it is not defined
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-between p-8 bg-gray-100">
@@ -49,16 +49,13 @@ export default function App() {
                         placeholder="Paste CSV data here..."
                         value={csvText}
                         onChange={e => setCsvText(e.target.value)}
-                        disabled={loading}
-                        // disabled={loading}
+                    />
                     <label className="flex flex-col items-center justify-center cursor-pointer px-4">
                         <UploadCloud className="w-6 h-6 text-gray-500" />
                         <input
                             type="file"
                             accept=".csv"
                             className="hidden"
-                            // onChange={handleFileUpload} // Removed because it does not exist in useArtemis
-                            disabled={loading}
                         />
                         <span className="text-xs text-gray-500">Upload</span>
                     </label>
@@ -67,19 +64,20 @@ export default function App() {
                     <button
                         className="bg-indigo-600 text-white px-4 py-2 rounded flex items-center gap-2 disabled:opacity-50"
                         onClick={handleLoadData}
-                        disabled={loading || isCsvEmpty}
                         disabled={isCsvEmpty}
+                    >
                         <Send className="w-4 h-4" />
                         Load Data
+                    </button>
+                    <button
                         className="bg-gray-200 text-gray-700 px-4 py-2 rounded flex items-center gap-2 disabled:opacity-50"
                         onClick={handleClear}
-                        disabled={loading || !csvText.trim()}
                         disabled={!csvText.trim()}
-                        onClick={handleClear}
                     >
                         <Wand2 className="w-4 h-4" />
                         Clear
                     </button>
+                </div>
                 {error && (
                     <div className="mb-4 text-red-600">{error}</div>
                 )}
@@ -88,11 +86,13 @@ export default function App() {
                         {steps.map((step, idx) => (
                             <StepCard
                                 key={step.id ?? idx}
-                                step={step}
-                                isActive={idx === activeStep}
-                                onSelect={() => setActiveStep(idx)}
-                                onRemove={() => handleRemoveStep(idx)}
-                                onUpdate={updated => handleUpdateStep(idx, updated)}
+                                step={{
+                                    ...step,
+                                    isActive: idx === activeStep,
+                                    onSelect: () => setActiveStep(idx),
+                                    onRemove: () => handleRemoveStep(idx),
+                                    onUpdate: (updated: any) => handleUpdateStep(idx, updated),
+                                }}
                             />
                         ))}
                         <button
@@ -102,12 +102,6 @@ export default function App() {
                             <PlusCircle className="w-5 h-5" />
                             Add Step
                         </button>
-                    </div>
-                )}
-                {result && (
-                    <div className="mt-6 bg-green-100 text-green-800 px-4 py-2 rounded flex items-center gap-2">
-                        <CheckCircle className="w-5 h-5" />
-                        {result}
                     </div>
                 )}
             </div>

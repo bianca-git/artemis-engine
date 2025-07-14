@@ -21,12 +21,25 @@ type WorkflowState = {
 
 export function useArtemis() {
     // --- State Management ---
+    // Steps and error state for step-based workflow
+    const [steps, setSteps] = useState<any[]>([]);
+    const [activeStep, setActiveStep] = useState<number>(0);
+    const [error, setError] = useState<string>("");
     const [csvText, setCsvText] = useState(
         `ID,TITLE,CONTENT,VISUAL
 1,"Taming the Cerberus of Spreadsheets","- The three-headed beast of data entry: manual errors, formatting hell, and soul-crushing repetition.<br>- How conventional ""solutions"" like basic macros often create more problems.<br>- Introducing the ""Ghost-in-the-Sheet"" method: using advanced scripting and conditional automation to create a self-correcting, intelligent data entry system.<br>- A step-by-step guide to setting up the core logic.","a vast, glowing holographic spreadsheet whose grid is alive with pulsating data streams"
 2,"Escaping the Labyrinth of Project Management Software","- The shared nightmare of bloated PM tools: endless notifications, conflicting ""single sources of truth,"" and the illusion of productivity.<br>- Why adding more integrations often makes the maze more complex.<br>- The ""Ariadne's Thread"" technique: a minimalist framework for centralizing tasks and communication, ruthlessly cutting out feature bloat.<br>- How to build a master dashboard that pulls only critical data, ignoring the noise.","an abstract labyrinth made of glowing purple circuit-board lines, cluttered with flickering, distracting software icons"`
     );
-    const [csvData, setCsvData] = useState<Topic[]>(() => parseCsvData(csvText));
+    const mapToTopic = (data: Record<string, string>[]): Topic[] =>
+        data.map((row) => ({
+            ID: row.ID || "",
+            TITLE: row.TITLE || "",
+            CONTENT: row.CONTENT || "",
+            VISUAL: row.VISUAL || "",
+            ...row,
+        }));
+
+    const [csvData, setCsvData] = useState<Topic[]>(() => mapToTopic(parseCsvData(csvText)));
     const [activeTopic, setActiveTopic] = useState<Topic | null>(null);
     const initialWorkflowState: WorkflowState = { topic: false, blog: false, visual: false, seo: false, social: false, cms: false };
     const [workflowState, setWorkflowState] = useState<WorkflowState>(initialWorkflowState);
@@ -48,6 +61,27 @@ export function useArtemis() {
     const [isLoadingTopicIdeas, setIsLoadingTopicIdeas] = useState(false);
 
     // --- Handlers & Logic ---
+    // Step management handlers
+    const handleAddStep = (step: any) => {
+        setSteps((prev) => [...prev, step]);
+    };
+
+    const handleRemoveStep = (index: number) => {
+        setSteps((prev) => prev.filter((_, i) => i !== index));
+        if (activeStep >= steps.length - 1 && activeStep > 0) {
+            setActiveStep(activeStep - 1);
+        }
+    };
+
+    const handleUpdateStep = (index: number, updated: any) => {
+        setSteps((prev) => prev.map((step, i) => (i === index ? updated : step)));
+    };
+
+    const handleClear = () => {
+        setSteps([]);
+        setActiveStep(0);
+        setError("");
+    };
     const resetGeneratedContent = () => {
         setBlogContent("");
         setImagePrompt("");
@@ -60,7 +94,7 @@ export function useArtemis() {
 
     const handleLoadData = () => {
         const data = parseCsvData(csvText);
-        setCsvData(data);
+        setCsvData(mapToTopic(data));
         setActiveTopic(null);
         setWorkflowState(initialWorkflowState);
         resetGeneratedContent();
@@ -95,7 +129,7 @@ export function useArtemis() {
     const addIdeaToCsv = (idea: any) => {
         const newCsvText = `${csvText}\n${idea.ID},"${idea.TITLE}","${idea.CONTENT}","${idea.VISUAL}"`;
         setCsvText(newCsvText);
-        setCsvData(parseCsvData(newCsvText));
+        setCsvData(mapToTopic(parseCsvData(newCsvText)));
     };
 
     // Example: Generate SEO Data
@@ -212,5 +246,6 @@ export function useArtemis() {
         isLoadingSocial, setIsLoadingSocial, isLoadingCms, setIsLoadingCms, isLoadingSeo, setIsLoadingSeo, isLoadingTopicIdeas, setIsLoadingTopicIdeas,
         resetGeneratedContent, handleLoadData, selectTopic,
         amplifyTopic, addIdeaToCsv, generateSeo, generateBlog, generateVisual, generateSocial, publishToCms
+        , handleClear, error, steps, activeStep, setActiveStep, handleRemoveStep, handleUpdateStep, handleAddStep
     };
 }
