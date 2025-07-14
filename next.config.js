@@ -1,9 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    appDir: true
-  }
+  // experimental options removed for Next.js 14+
 };
 
 module.exports = nextConfig;
