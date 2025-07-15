@@ -13,6 +13,7 @@ import {
     Wand2,
     PlusCircle,
     Send,
+    Sparkles,
 } from "lucide-react";
 import StepCard from "./StepCard";
 import { useArtemis } from "../hooks/useArtemis";
