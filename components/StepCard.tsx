@@ -39,12 +39,8 @@ const StepCard: React.FC<StepCardProps> = (props) => {
     <div className={`${baseClasses} ${activeClasses} ${opacityClass}`}>
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="p-2 rounded bg-gray-100 text-gray-600">
-            {icon}
-          </div>
-          <h2 className="text-lg font-semibold text-gray-900">
-            {title}
-          </h2>
+          {icon}
+          <h2 className="text-lg font-bold text-cyan-300 tracking-wider uppercase" style={{ letterSpacing: "0.08em" }}>{title}</h2>
         </div>
         {isComplete && (
           <div className="flex items-center space-x-2">
@@ -53,7 +49,7 @@ const StepCard: React.FC<StepCardProps> = (props) => {
           </div>
         )}
       </div>
-      <div className="p-4 text-gray-700">
+      <div className="p-6">
         {children}
       </div>
     </div>
