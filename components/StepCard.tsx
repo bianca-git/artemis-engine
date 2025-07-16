@@ -30,24 +30,30 @@ const StepCard: React.FC<StepCardProps> = (props) => {
   const isActive = step ? step.isActive : props.isActive;
   const children = step && step.children !== undefined ? step.children : props.children;
 
-  // Neon glass effect, magenta border for special, lime check for complete
-  const baseCard = "rounded-xl border transition-all duration-500 shadow-lg font-sans";
-  const glassBg = "bg-slate-800/50 backdrop-blur-md";
-  const borderColor = isActive ? "border-cyan-400" : isUnlocked ? "border-slate-700" : "border-slate-700";
-  const opacity = isUnlocked ? "opacity-100" : "opacity-40 pointer-events-none";
-  const scale = isActive ? "scale-105" : "scale-100";
+  // Simple boring styling
+  const baseClasses = "simple-card";
+  const activeClasses = isActive ? "border-blue-300" : "";
+  const opacityClass = isUnlocked ? "opacity-100" : "opacity-50";
 
   return (
-    <div className={`${baseCard} ${glassBg} ${borderColor} ${opacity} ${scale}`}
-      style={{ boxShadow: isActive ? "0 0 24px #00FFFF55" : "0 0 8px #111827" }}>
-      <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+    <div className={`${baseClasses} ${activeClasses} ${opacityClass}`}>
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          {icon}
-          <h2 className="text-lg font-bold text-cyan-300 tracking-wider uppercase" style={{ letterSpacing: "0.08em" }}>{title}</h2>
+          <div className="p-2 rounded bg-gray-100 text-gray-600">
+            {icon}
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {title}
+          </h2>
         </div>
-        {isComplete && <CheckCircle className="text-lime-400 drop-shadow-neon" size={22} />}
+        {isComplete && (
+          <div className="flex items-center space-x-2">
+            <CheckCircle className="text-green-500 w-5 h-5" />
+            <span className="text-green-500 font-medium text-sm">Complete</span>
+          </div>
+        )}
       </div>
-      <div className="p-6">
+      <div className="p-4 text-gray-700">
         {children}
       </div>
     </div>
