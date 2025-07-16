@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind base, components, and utilities are included via PostCSS/Tailwind build pipeline. 
+   Remove these lines if not using Tailwind or if your environment does not support @tailwind directives. */
 
 /* Simple, boring utility classes */
 .simple-card {
