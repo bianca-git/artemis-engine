@@ -30,22 +30,22 @@ const StepCard: React.FC<StepCardProps> = (props) => {
   const isActive = step ? step.isActive : props.isActive;
   const children = step && step.children !== undefined ? step.children : props.children;
 
-  // Simple boring styling
-  const baseClasses = "simple-card";
-  const activeClasses = isActive ? "border-blue-300" : "";
-  const opacityClass = isUnlocked ? "opacity-100" : "opacity-50";
+  // Neon Noir styling
+  const baseClasses = `rounded-2xl shadow-lg backdrop-blur-md border transition-all duration-300 ${
+    isUnlocked ? 'opacity-100' : 'opacity-50 pointer-events-none'} ${
+    isActive ? 'border-cyan-400' : isComplete ? 'border-lime-400' : 'border-[#475569]'} bg-slate-800/50`;
 
   return (
-    <div className={`${baseClasses} ${activeClasses} ${opacityClass}`}>
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+    <div className={baseClasses}>
+      <div className="p-5 border-b border-[#475569] flex items-center justify-between">
+        <div className="flex items-center gap-3">
           {icon}
-          <h2 className="text-lg font-bold text-cyan-300 tracking-wider uppercase" style={{ letterSpacing: "0.08em" }}>{title}</h2>
+          <h2 className={`text-xl font-extrabold uppercase tracking-wider ${isActive ? 'text-cyan-400 drop-shadow-neon' : 'text-slate-200'}`} style={{ letterSpacing: "0.12em" }}>{title}</h2>
         </div>
         {isComplete && (
-          <div className="flex items-center space-x-2">
-            <CheckCircle className="text-green-500 w-5 h-5" />
-            <span className="text-green-500 font-medium text-sm">Complete</span>
+          <div className="flex items-center gap-2">
+            <CheckCircle className="text-lime-400 w-6 h-6 animate-pulse" />
+            <span className="text-lime-400 font-bold text-base">Complete</span>
           </div>
         )}
       </div>
