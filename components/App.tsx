@@ -8,7 +8,7 @@ import { Terminal, Rss, Image as ImageIcon, Send, UploadCloud, Sparkles, Wand2, 
 const App: React.FC = () => {
   const csvRefreshTimeout = React.useRef<NodeJS.Timeout | null>(null);
   const {
-    csvText, setCsvText, handleLoadData, csvData, activeTopic, selectTopic,
+    csvText, setCsvText, handleLoadData, csvData, setCsvData, activeTopic, selectTopic,
     blogContent, generateBlog,
     imageUrl, imagePrompt, generateVisual, visualLoadingMessage,
     seoData, generateSeo,
@@ -59,6 +59,26 @@ const App: React.FC = () => {
                    if (csvRefreshTimeout.current) clearTimeout(csvRefreshTimeout.current);
                    csvRefreshTimeout.current = setTimeout(() => {
                      handleLoadData();
+                <button
+                  type="button"
+                  className="w-full font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 bg-sky-200 hover:bg-sky-300 text-brand-charcoal border border-sky-400"
+                  onClick={() => {
+                    setCsvText('ID,TITLE,CONTENT,VISUAL');
+                    setCsvData([]);
+                    selectTopic(null);
+                    setWorkflowState({
+                      topic: false,
+                      blog: false,
+                      visual: false,
+                      seo: false,
+                      social: false,
+                      cms: false,
+                    });
+                  }}
+                >
+                  <Clapperboard size={18} />
+                  <span>Reset</span>
+                </button>
                    }, 500);
                  }}
                  onBlur={() => {

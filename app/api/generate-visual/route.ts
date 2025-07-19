@@ -1,5 +1,7 @@
 
+
 import { NextResponse } from 'next/server';
+import client from '../publish-cms/sanityClient';
 
 export async function POST(request: Request) {
   const { prompt } = await request.json();
@@ -19,6 +21,22 @@ export async function POST(request: Request) {
   });
   const result = await openaiRes.json();
   const url = result.data?.[0]?.url || '';
-  const assetRef = result.data?.[0]?.id || '';
+  let assetRef = '';
+
+  // Upload image to Sanity immediately
+  if (url) {
+    try {
+      const imageRes = await fetch(url);
+      const arrayBuffer = await imageRes.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const asset = await client.assets.upload('image', buffer, {
+        filename: 'generated-image.jpg',
+      });
+      assetRef = asset._id;
+    } catch (err) {
+      assetRef = '';
+    }
+  }
+
   return NextResponse.json({ url, assetRef, prompt });
 }
