@@ -1,3 +1,123 @@
+body {
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 50%, #18181b 0%, #050505 100%);
+  color: #f3f3f3;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: -1;
+}
+h1, h2, h3, h4, h5, h6 {
+  color: #e0e0ff;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+input, textarea {
+  background: #23232b;
+  color: #f3f3f3;
+  border: 1px solid #6ee7b7;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 1rem;
+  margin-bottom: 12px;
+  outline: none;
+  transition: border 0.2s;
+}
+input:focus, textarea:focus {
+  border-color: #e946c1;
+  box-shadow: 0 0 0 2px #e946c133;
+}
+button, .btn {
+  background: linear-gradient(90deg, #e946c1 0%, #00eaff 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px 0 #0003;
+  margin-bottom: 10px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+button:hover, .btn:hover {
+  background: linear-gradient(90deg, #00eaff 0%, #e946c1 100%);
+  box-shadow: 0 4px 16px 0 #e946c133;
+}
+.card {
+  background: rgba(24,24,27,0.95);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px 0 #000a;
+  padding: 32px 24px;
+  margin-bottom: 24px;
+  border: 1px solid #e946c1;
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.branding {
+  color: #e946c1;
+  font-weight: bold;
+  font-size: 1.2rem;
+  letter-spacing: 0.05em;
+}
+.icon {
+  color: #00eaff;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.social-icons {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.example-topic {
+  background: linear-gradient(90deg, #e946c1 0%, #00eaff 100%);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 1rem;
+  margin-top: 12px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px 0 #0003;
+}
+.csv-input {
+  width: 100%;
+  max-width: 480px;
+  margin-bottom: 16px;
+  font-size: 1rem;
+}
+
+.step-card {
+  margin-bottom: 32px;
+  padding: 0;
+}
+
+.app-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
 /* Tailwind base, components, and utilities are included via PostCSS/Tailwind build pipeline. 
    Remove these lines if not using Tailwind or if your environment does not support @tailwind directives. */
 

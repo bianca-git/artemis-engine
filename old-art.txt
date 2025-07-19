@@ -1,2 +1,0 @@
-// This file was previously artemis.ts. It has been renamed for archival purposes.
-// All reusable logic and components have been extracted to their respective modules.
