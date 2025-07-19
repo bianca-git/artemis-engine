@@ -1,53 +1,30 @@
+// components/StepCard.tsx
 import React from "react";
 import { CheckCircle } from "lucide-react";
 
-
-interface StepCardProps {
-  step?: {
-    title: string;
-    icon: React.ReactNode;
-    isUnlocked: boolean;
-    isComplete: boolean;
-    isActive?: boolean;
-    children?: React.ReactNode;
-    [key: string]: any;
-  };
-  title?: string;
-  icon?: React.ReactNode;
-  isUnlocked?: boolean;
-  isComplete?: boolean;
-  isActive?: boolean;
-  children?: React.ReactNode;
+interface Step {
+  title: string;
+  icon: React.ReactNode;
+  isUnlocked: boolean;
+  isComplete: boolean;
+  children: React.ReactNode;
 }
 
+interface StepCardProps {
+  step: Step;
+}
 
-const StepCard: React.FC<StepCardProps> = (props) => {
-  const step = props.step;
-  const title = step ? step.title : props.title;
-  const icon = step ? step.icon : props.icon;
-  const isUnlocked = step ? step.isUnlocked : props.isUnlocked;
-  const isComplete = step ? step.isComplete : props.isComplete;
-  const isActive = step ? step.isActive : props.isActive;
-  const children = step && step.children !== undefined ? step.children : props.children;
-
-  // Neon Noir styling
-  const baseClasses = `rounded-2xl shadow-lg backdrop-blur-md border transition-all duration-300 ${
-    isUnlocked ? 'opacity-100' : 'opacity-50 pointer-events-none'} ${
-    isActive ? 'border-cyan-400' : isComplete ? 'border-lime-400' : 'border-[#475569]'} bg-slate-800/50`;
+const StepCard: React.FC<StepCardProps> = ({ step }) => {
+  const { title, icon, isUnlocked, isComplete, children } = step;
 
   return (
-    <div className={baseClasses}>
-      <div className="p-5 border-b border-[#475569] flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <div className={`border border-brand-slate-dark bg-slate-800/50 rounded-lg transition-all duration-500 ${isUnlocked ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+      <div className="p-4 border-b border-brand-slate-dark flex items-center justify-between">
+        <div className="flex items-center space-x-3">
           {icon}
-          <h2 className={`text-xl font-extrabold uppercase tracking-wider ${isActive ? 'text-cyan-400 drop-shadow-neon' : 'text-slate-200'}`} style={{ letterSpacing: "0.12em" }}>{title}</h2>
+          <h2 className="text-lg font-bold text-neon-cyan tracking-wider">{title}</h2>
         </div>
-        {isComplete && (
-          <div className="flex items-center gap-2">
-            <CheckCircle className="text-lime-400 w-6 h-6 animate-pulse" />
-            <span className="text-lime-400 font-bold text-base">Complete</span>
-          </div>
-        )}
+        {isComplete && <CheckCircle className="text-feedback-success" size={20} />}
       </div>
       <div className="p-6">
         {children}
