@@ -2,10 +2,11 @@
 "use client";
 import React from 'react';
 import StepCard from './StepCard';
-import { useArtemis } from '../hooks/useArtemis';
+import useArtemis from '../hooks/useArtemis';
 import { Terminal, Rss, Image as ImageIcon, Send, UploadCloud, Sparkles, Wand2, PlusCircle, Clapperboard, Edit, CheckCircle, Loader2, BrainCircuit, Linkedin, Twitter, Instagram } from 'lucide-react';
 
 const App: React.FC = () => {
+  const csvRefreshTimeout = React.useRef<NodeJS.Timeout | null>(null);
   const {
     csvText, setCsvText, handleLoadData, csvData, activeTopic, selectTopic,
     blogContent, generateBlog,
@@ -14,6 +15,7 @@ const App: React.FC = () => {
     socialPosts, generateSocial,
     sanityAssetRef, setSanityAssetRef, cmsPayload, publishToCms,
     workflowState,
+    setWorkflowState,
     isLoadingBlog, isLoadingVisual, isLoadingSocial, isLoadingCms, isLoadingSeo, isLoadingTopicIdeas,
     topicKeyword, setTopicKeyword, topicIdeas, amplifyTopic, addIdeaToCsv,
   } = useArtemis();
@@ -22,10 +24,15 @@ const App: React.FC = () => {
     <div className="bg-brand-charcoal text-brand-slate min-h-screen font-sans p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <header className="text-center mb-8">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-widest uppercase" style={{ textShadow: '0 0 10px #00ffff, 0 0 20px #00ffff' }}>
+          <h1
+            className="text-4xl sm:text-5xl font-bold text-white tracking-widest uppercase"
+            style={{
+              WebkitBackgroundClip: 'text',
+            }}
+          >
             A R T E M I S
           </h1>
-          <p className="text-neon-magenta text-lg mt-2 font-light tracking-wider">Automated Real-Time Engagement & Marketing Intelligence System</p>
+          <p className="text-lg mt-2 font-light tracking-wider">Automated Real-Time Engagement & Marketing Intelligence System</p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -44,12 +51,61 @@ const App: React.FC = () => {
 
             <div className="border border-brand-slate-dark bg-slate-800/50 rounded-lg p-4">
                <h3 className="font-bold text-neon-cyan text-lg mb-2">1. Load Data</h3>
-               <textarea className="w-full h-48 bg-gray-900 border border-slate-600 rounded-md p-2 text-xs font-mono" value={csvText} onChange={(e) => setCsvText(e.target.value)} />
-               <button onClick={handleLoadData} className="mt-2 w-full bg-neon-cyan hover:opacity-80 text-brand-charcoal font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2"><UploadCloud size={18} /><span>Load/Update CSV Data</span></button>
+               <textarea
+                 className="w-full h-48 bg-gray-900 border border-slate-600 rounded-md p-2 text-xs font-mono"
+                 value={csvText}
+                 onChange={e => {
+                   setCsvText(e.target.value);
+                   if (csvRefreshTimeout.current) clearTimeout(csvRefreshTimeout.current);
+                   csvRefreshTimeout.current = setTimeout(() => {
+                     handleLoadData();
+                   }, 500);
+                 }}
+                 onBlur={() => {
+                   handleLoadData();
+                 }}
+               />
+               <div className="mt-2">
+                 <button
+                   type="button"
+           className="w-full font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 rainbow-hover-btn"
+           style={{
+             color: '#222',
+           }}
+                   onClick={() => {
+                     document.getElementById('csv-file-input')?.click();
+                   }}
+                 >
+                   <UploadCloud size={18} />
+                   <span>Load CSV Data</span>
+                 </button>
+                 <input
+                   id="csv-file-input"
+                   type="file"
+                   accept=".csv,text/csv"
+                   style={{ display: 'none' }}
+                   onChange={e => {
+                     const file = e.target.files?.[0];
+                     if (!file) return;
+                     const reader = new FileReader();
+                     reader.onload = (event) => {
+                       const text = event.target?.result;
+                       if (typeof text === 'string') {
+                         setCsvText(text);
+                         handleLoadData();
+                         setTimeout(() => handleLoadData(), 0);
+                       }
+                     };
+                     reader.readAsText(file);
+                     e.target.value = '';
+                   }}
+                 />
+               </div>
             </div>
+ export default App;
             <div className="border border-brand-slate-dark bg-slate-800/50 rounded-lg p-4">
               <h3 className="font-bold text-neon-cyan text-lg mb-3">2. Select Active Topic</h3>
-              <div className="space-y-2 max-h-96 overflow-y-auto pr-2">{csvData.map((topic) => <button key={topic.ID} onClick={() => selectTopic(topic)} className={`w-full text-left p-3 rounded-md transition-all duration-200 ${activeTopic?.ID === topic.ID ? 'bg-neon-cyan/20 border-neon-cyan ring-2 ring-neon-cyan' : 'bg-slate-700/50 hover:bg-slate-600/50 border-slate-600'} border`}><p className="font-bold text-white">{topic.TITLE}</p><p className="text-xs text-slate-400 mt-1 truncate">{topic.CONTENT}</p></button>)}</div>
+              <div className="space-y-2 max-h-96 overflow-y-auto pr-2">{csvData.map((topic) => <button key={topic.ID} onClick={() => { selectTopic(topic); if (!workflowState.topic) setWorkflowState((prev: any) => ({ ...prev, topic: true })); }} className={`w-full text-left p-3 rounded-md transition-all duration-200 ${activeTopic?.ID === topic.ID ? 'bg-neon-cyan/20 border-neon-cyan ring-2 ring-neon-cyan' : 'bg-slate-700/50 hover:bg-slate-600/50 border-slate-600'} border`}><p className="font-bold text-white">{topic.TITLE}</p><p className="text-xs text-slate-400 mt-1 truncate">{topic.CONTENT}</p></button>)}</div>
             </div>
           </div>
 

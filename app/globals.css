@@ -1,2 +1,16 @@
 /* app/globals.css */
 @import "tailwindcss";
+
+/* Tasteful rainbow gradient hover button for Load CSV Data */
+.rainbow-hover-btn {
+  transition: box-shadow 0.8s, border 0.8s;
+  border: 2px solid #a0e7e5;
+  background-color: #a0e7e5;
+}
+.rainbow-hover-btn:hover {
+  border: -5px solid #a0e7e5;
+}
+
+.rainbow-hover-btn:hover {
+  box-shadow: 0 0 5px #ff00cc, 0 0 6px #3333ff, 0 0 7px #00ffcc, 0 0 8px #ffff00, 0 0 9px #ff6600;
+}
