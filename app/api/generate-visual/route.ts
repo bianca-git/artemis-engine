@@ -12,47 +12,78 @@ export async function POST(request: Request) {
   let uploadError = null;
 
   try {
-    // Gemini API endpoint and key (replace with your actual Gemini endpoint and key)
-    const GEMINI_API_URL = process.env.GEMINI_API_URL || 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent';
+    // Gemini API endpoint and key
+    const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     if (!GEMINI_API_KEY) throw new Error('Missing Gemini API key');
 
-    // Gemini payload (prompt engineering similar to previous logic)
-    const geminiPayload = {
+    // Gemini payload for generating a descriptive prompt for the image model
+    const promptGenerationPayload = {
       contents: [
         {
           role: 'user',
           parts: [
             {
-              text: `You are an expert AI visual designer. Create a high-resolution marketing visual in a modern, vibrant style. Theme: ${prompt}. Use magenta and cyan accents, clean lines, and a futuristic look. Output as a photorealistic image suitable for web and social media. Do not include any text in the image.`
+              text: `You are an expert AI visual designer. Create a detailed, descriptive prompt for an image generation model. The prompt should describe a high-resolution marketing visual in a modern, vibrant style. Theme: ${prompt}. Use magenta and cyan accents, clean lines, and a futuristic look. The final output should be a photorealistic image suitable for web and social media, with no text. The prompt you generate should be detailed enough for an image model to create a compelling visual based on it.`
             }
           ]
         }
       ],
       generationConfig: {
-        temperature: 1,
+        temperature: 0.8,
         topP: 1,
-        maxOutputTokens: 2048
+        maxOutputTokens: 1024
       }
     };
 
-    // Call Gemini for image generation
-    const geminiRes = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+    // Call Gemini to generate the image prompt
+    const promptRes = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(geminiPayload),
+      body: JSON.stringify(promptGenerationPayload),
     });
-    if (!geminiRes.ok) {
-      geminiError = await geminiRes.text();
-      throw new Error(`Gemini image generation failed: ${geminiRes.status} ${geminiRes.statusText} - ${geminiError}`);
+
+    if (!promptRes.ok) {
+      geminiError = await promptRes.text();
+      throw new Error(`Gemini prompt generation failed: ${promptRes.status} ${promptRes.statusText} - ${geminiError}`);
     }
-    const geminiResult = await geminiRes.json();
-    // Extract base64 image from Gemini response (assume image is in geminiResult.candidates[0].content.parts[0].inlineData.data)
-    const base64Image = geminiResult?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || '';
+
+    const promptResult = await promptRes.json();
+    const imagePrompt = promptResult.candidates[0].content.parts[0].text;
+
+    // Use a different service for image generation, e.g. DALL-E via OpenAI
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+    if (!OPENAI_API_KEY) throw new Error('Missing OpenAI API key');
+
+    const dallePayload = {
+      model: "dall-e-3",
+      prompt: imagePrompt,
+      n: 1,
+      size: "1024x1024",
+      response_format: "b64_json"
+    };
+
+    const dalleRes = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify(dallePayload)
+    });
+
+    if (!dalleRes.ok) {
+      const errorText = await dalleRes.text();
+      throw new Error(`DALL-E image generation failed: ${dalleRes.status} ${dalleRes.statusText} - ${errorText}`);
+    }
+
+    const dalleResult = await dalleRes.json();
+    const base64Image = dalleResult.data[0].b64_json;
+
     if (!base64Image) {
-      throw new Error('No image data returned from Gemini');
+      throw new Error('No image data returned from DALL-E');
     }
 
     // Convert base64 to buffer
