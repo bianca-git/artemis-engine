@@ -22,6 +22,8 @@ const App: React.FC = () => {
     socialPosts, generateSocial,
     // CMS
     cmsPayload, publishToCms,
+    // Reset handlers
+    resetBlog, resetSeo, resetVisual, resetSocial, resetCms,
     // Sanity asset reference
     sanityAssetRef, setSanityAssetRef,
     workflowState,
@@ -140,7 +142,6 @@ const App: React.FC = () => {
                  />
                </div>
             </div>
- export default App;
             <div className="border border-brand-slate-dark bg-slate-800/50 rounded-lg p-4">
               <h3 className="font-bold text-neon-cyan text-lg mb-3">2. Select Active Topic</h3>
               <div className="space-y-2 max-h-96 overflow-y-auto pr-2">{csvData.map((topic) => <button key={topic.ID} onClick={() => { selectTopic(topic); if (!workflowState.topic) setWorkflowState((prev: any) => ({ ...prev, topic: true })); }} className={`w-full text-left p-3 rounded-md transition-all duration-200 ${activeTopic?.ID === topic.ID ? 'bg-neon-cyan/20 border-neon-cyan ring-2 ring-neon-cyan' : 'bg-slate-700/50 hover:bg-slate-600/50 border-slate-600'} border`}><p className="font-bold text-white">{topic.TITLE}</p><p className="text-xs text-slate-400 mt-1 truncate">{topic.CONTENT}</p></button>)}</div>
@@ -149,128 +150,193 @@ const App: React.FC = () => {
 
           {/* --- GENERATION STAGES (RIGHT) --- */}
           <div className="lg:col-span-2 space-y-8">
-            <StepCard step={{ title: "Generate Blog Post", icon: <Rss className="text-neon-cyan" />, isUnlocked: workflowState.topic, isComplete: workflowState.blog, children:
-              <>
-                {!blogContent && <button onClick={() => generateBlog(activeTopic)} disabled={isLoadingBlog} className="w-full bg-neon-cyan hover:opacity-80 text-brand-charcoal font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 disabled:bg-slate-600"> {isLoadingBlog ? <Loader2 className="animate-spin" /> : <Terminal />} <span>GENERATE BLOG</span> </button>}
-                {isLoadingBlog && <div className="text-center p-4">The Siren is contemplating...</div>}
-                {blogContent && <div className="prose prose-invert prose-sm sm:prose-base max-w-none bg-gray-900/50 p-4 rounded-md border border-brand-slate-dark"><pre className="whitespace-pre-wrap font-sans">{blogContent}</pre></div>}
-              </>
-            }}/>
-            
-            {workflowState.blog && (<div className="border border-neon-magenta/50 bg-slate-900/30 rounded-lg p-1 space-y-6">
-                <h3 className="text-center font-bold text-neon-magenta text-xl mt-4 flex items-center justify-center"><Sparkles className="mr-2" size={22}/>Enhancement Suite</h3>
-                <StepCard step={{ title: "✨ SEO Suite", icon: <Sparkles className="text-neon-cyan" />, isUnlocked: workflowState.blog, isComplete: workflowState.seo, children:
-                    <>
-                        {!seoData && <button onClick={() => generateSeo(activeTopic)} disabled={isLoadingSeo} className="w-full bg-neon-cyan hover:opacity-80 text-brand-charcoal font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 disabled:bg-slate-600"> {isLoadingSeo ? <Loader2 className="animate-spin" /> : <Terminal />} <span>GENERATE SEO</span> </button>}
-                        {isLoadingSeo && <div className="text-center p-4">Optimizing for the net...</div>}
-                        {seoData && <div className="space-y-4"><div><h4 className="font-bold text-neon-magenta mb-2">Meta Description</h4><p className="text-sm bg-gray-900/50 p-3 rounded-md border border-brand-slate-dark">{seoData.metaDescription}</p></div><div><h4 className="font-bold text-neon-magenta mb-2">Keywords</h4><div className="flex flex-wrap gap-2">{seoData.keywords.map(k => <span key={k} className="bg-cyan-900/70 text-neon-cyan text-xs font-medium px-2.5 py-1 rounded-full">{k}</span>)}</div></div></div>}
-                    </>
-                }}/>
-            </div>)}
-
-            <StepCard step={{
-              title: "Generate Visual",
-              icon: <ImageIcon className="text-neon-cyan" />,
-              isUnlocked: workflowState.blog,
-              isComplete: workflowState.visual,
-              children: (
-                <>
-                  {!visualDescriptions.length && (
-                    <div className="space-y-4">
-                      <input
-                        type="text"
-                        placeholder="Theme"
-                        value={imagePrompt}
-                        onChange={e => setImagePrompt(e.target.value)}
-                        className="w-full bg-gray-900 border border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-neon-magenta"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Scene"
-                        value={imageScene}
-                        onChange={e => setImageScene(e.target.value)}
-                        className="w-full bg-gray-900 border border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-neon-magenta"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Body Language"
-                        value={bodyLanguage}
-                        onChange={e => setBodyLanguage(e.target.value)}
-                        className="w-full bg-gray-900 border border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-neon-magenta"
-                      />
+            <StepCard
+              onReset={resetBlog}
+              step={{
+                title: "Generate Blog Post",
+                icon: <Rss className="text-neon-cyan" />,
+                isUnlocked: workflowState.topic,
+                isComplete: workflowState.blog,
+                children: (
+                  <>
+                    {!blogContent && (
                       <button
-                        onClick={() => generateVisual(imagePrompt, imageScene, bodyLanguage)}
-                        disabled={isLoadingVisual}
+                        onClick={() => generateBlog(activeTopic)}
+                        disabled={isLoadingBlog}
                         className="w-full bg-neon-cyan hover:opacity-80 text-brand-charcoal font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 disabled:bg-slate-600"
                       >
-                        {isLoadingVisual ? <Loader2 className="animate-spin" /> : <Terminal />}
-                        <span>GENERATE DESCRIPTIONS</span>
+                        {isLoadingBlog ? <Loader2 className="animate-spin" /> : <Terminal />} <span>GENERATE BLOG</span>
                       </button>
-                    </div>
-                  )}
-                  {isLoadingVisual && (
-                    <div className="text-center p-4 flex flex-col items-center space-y-2">
-                      <BrainCircuit className="text-neon-magenta animate-pulse" size={24}/>
-                      <span>{visualLoadingMessage}</span>
-                    </div>
-                  )}
-                  {visualDescriptions.length > 0 && (
-                    <div className="space-y-4">
-                      {visualDescriptions.map((desc, idx) => (
-                        <div key={idx} className="flex items-start space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedVisuals.has(idx)}
-                            onChange={() => handleVisualSelection(idx)}
-                            className="mt-1"
-                          />
-                          <div className="bg-gray-900/50 p-3 rounded-md border border-brand-slate-dark w-full">
-                            <p className="font-bold text-white">{desc["Image Name"]}</p>
-                            <p className="text-sm text-slate-300">{desc["Caption Plan"]}</p>
-                            <p className="text-xs text-slate-400">Audience: {desc["Target Audience"]}</p>
-                            <p className="text-xs text-slate-400">Keywords: {desc["Keywords"]}</p>
-                            <p className="text-xs text-slate-400">Platform: {desc["Platform"]}</p>
+                    )}
+                    {isLoadingBlog && <div className="text-center p-4">The Siren is contemplating...</div>}
+                    {blogContent && (
+                      <div className="prose prose-invert prose-sm sm:prose-base max-w-none bg-gray-900/50 p-4 rounded-md border border-brand-slate-dark">
+                        <pre className="whitespace-pre-wrap font-sans">{blogContent}</pre>
+                      </div>
+                    )}
+                  </>
+                ),
+              }}
+            />
+            {workflowState.blog && (
+              <div className="border border-neon-magenta/50 bg-slate-900/30 rounded-lg p-1 space-y-6">
+                <h3 className="text-center font-bold text-neon-magenta text-xl mt-4 flex items-center justify-center">
+                  <Sparkles className="mr-2" size={22} />Enhancement Suite
+                </h3>
+                <StepCard
+                  onReset={resetSeo}
+                  step={{
+                    title: "✨ SEO Suite",
+                    icon: <Sparkles className="text-neon-cyan" />,
+                    isUnlocked: workflowState.blog,
+                    isComplete: workflowState.seo,
+                    children: (
+                      <>
+                        {!seoData && (
+                          <button
+                            onClick={() => generateSeo(activeTopic)}
+                            disabled={isLoadingSeo}
+                            className="w-full bg-neon-cyan hover:opacity-80 text-brand-charcoal font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 disabled:bg-slate-600"
+                          >
+                            {isLoadingSeo ? <Loader2 className="animate-spin" /> : <Terminal />} <span>GENERATE SEO</span>
+                          </button>
+                        )}
+                        {isLoadingSeo && <div className="text-center p-4">Optimizing for the net...</div>}
+                        {seoData && (
+                          <div className="space-y-4">
+                            <div>
+                              <h4 className="font-bold text-neon-magenta mb-2">Meta Description</h4>
+                              <p className="text-sm bg-gray-900/50 p-3 rounded-md border border-brand-slate-dark">
+                                {seoData.metaDescription}
+                              </p>
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-neon-magenta mb-2">Keywords</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {seoData.keywords.map(k => (
+                                  <span key={k} className="bg-cyan-900/70 text-neon-cyan text-xs font-medium px-2.5 py-1 rounded-full">
+                                    {k}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                      <button
-                        onClick={publishVisualsToSheet}
-                        disabled={isLoadingVisual || !selectedVisuals.size}
-                        className="w-full bg-neon-magenta hover:opacity-80 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 disabled:bg-slate-600"
-                      >
-                        <Send />
-                        <span>SEND SELECTED TO SHEET</span>
-                      </button>
-                    </div>
-                  )}
-                </>
-              )
-            }} />
-
-            <StepCard step={{ title: "Generate Social Posts", icon: <Send className="text-neon-cyan" />, isUnlocked: workflowState.visual, isComplete: workflowState.social, children:
-               <>
-                {!socialPosts && <button onClick={() => generateSocial(blogContent)} disabled={isLoadingSocial} className="w-full bg-neon-cyan hover:opacity-80 text-brand-charcoal font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 disabled:bg-slate-600"> {isLoadingSocial ? <Loader2 className="animate-spin" /> : <Terminal />} <span>GENERATE SOCIAL</span> </button>}
-                {isLoadingSocial && <div className="text-center p-4">Broadcasting to the net...</div>}
-                {socialPosts && <div className="space-y-4">
-                    <div className="p-4 bg-gray-900/50 rounded-md border border-brand-slate-dark"><h4 className="font-bold text-white flex items-center space-x-2"><Linkedin size={18} className="text-[#0077b5]"/><span>LinkedIn</span></h4><p className="text-sm mt-2 whitespace-pre-wrap">{socialPosts.linkedin}</p></div>
-                    <div className="p-4 bg-gray-900/50 rounded-md border border-brand-slate-dark"><h4 className="font-bold text-white flex items-center space-x-2"><Twitter size={18} className="text-[#1DA1F2]"/><span>Twitter/X</span></h4><p className="text-sm mt-2 whitespace-pre-wrap">{socialPosts.twitter}</p></div>
-                    <div className="p-4 bg-gray-900/50 rounded-md border border-brand-slate-dark"><h4 className="font-bold text-white flex items-center space-x-2"><Instagram size={18} className="text-[#E1306C]"/><span>Instagram</span></h4><p className="text-sm mt-2 whitespace-pre-wrap">{socialPosts.instagram}</p></div>
-                </div>}
-               </>
-            }}/>
-            
-            <StepCard step={{ title: "Publish to CMS", icon: <UploadCloud className="text-neon-cyan" />, isUnlocked: workflowState.visual, isComplete: workflowState.cms, children:
-              <>
-                {!cmsPayload && <div className="space-y-4">
-                    <div><label htmlFor="sanity-ref" className="block text-sm font-bold text-neon-magenta mb-2">Sanity Asset _ref ID</label><input type="text" id="sanity-ref" placeholder="image-a7e4b5e2f1d9c8c7b6a5...-1920x1080-jpg" value={sanityAssetRef} onChange={(e) => setSanityAssetRef(e.target.value)} className="w-full bg-gray-900 border border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-neon-magenta"/></div>
-                    <button onClick={publishToCms} disabled={!sanityAssetRef || isLoadingCms} className="w-full bg-neon-cyan hover:opacity-80 text-brand-charcoal font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 disabled:bg-slate-600"> {isLoadingCms ? <Loader2 className="animate-spin" /> : <Terminal />} <span>PUBLISH TO CMS</span> </button>
-                </div>}
-                {cmsPayload && <div>
-                    <p className="text-feedback-success font-bold mb-2 flex items-center space-x-2"><CheckCircle size={20}/><span>Payload ready for Sanity CMS.</span></p>
-                    <pre className="w-full h-96 overflow-y-auto bg-gray-950 p-4 rounded-md border border-brand-slate-dark text-xs font-mono">{JSON.stringify(cmsPayload, null, 2)}</pre>
-                </div>}
-              </>
-            }}/>
+                        )}
+                      </>
+                    ),
+                  }}
+                />
+              </div>
+            )}
+            <StepCard
+              onReset={resetVisual}
+              step={{
+                title: "Generate Visual",
+                icon: <ImageIcon className="text-neon-cyan" />,
+                isUnlocked: workflowState.blog,
+                isComplete: workflowState.visual,
+                children: (
+                  <>
+                    {!visualDescriptions.length && (
+                      <div className="space-y-4">
+                        <input
+                          type="text"
+                          placeholder="Theme"
+                          value={imagePrompt}
+                          onChange={e => setImagePrompt(e.target.value)}
+                          className="w-full bg-gray-900 border border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-neon-magenta"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Scene"
+                          value={imageScene}
+                          onChange={e => setImageScene(e.target.value)}
+                          className="w-full bg-gray-900 border border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-neon-magenta"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Body Language"
+                          value={bodyLanguage}
+                          onChange={e => setBodyLanguage(e.target.value)}
+                          className="w-full bg-gray-900 border border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-neon-magenta"
+                        />
+                        <button
+                          onClick={() => generateVisual(imagePrompt, imageScene, bodyLanguage)}
+                          disabled={isLoadingVisual}
+                          className="w-full bg-neon-cyan hover:opacity-80 text-brand-charcoal font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 disabled:bg-slate-600"
+                        >
+                          {isLoadingVisual ? <Loader2 className="animate-spin" /> : <Terminal />}
+                          <span>GENERATE DESCRIPTIONS</span>
+                        </button>
+                      </div>
+                    )}
+                    {isLoadingVisual && (
+                      <div className="text-center p-4 flex flex-col items-center space-y-2">
+                        <BrainCircuit className="text-neon-magenta animate-pulse" size={24}/>
+                        <span>{visualLoadingMessage}</span>
+                      </div>
+                    )}
+                    {visualDescriptions.length > 0 && (
+                      <div className="space-y-4">
+                        {visualDescriptions.map((desc, idx) => (
+                          <div key={idx} className="flex items-start space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedVisuals.has(idx)}
+                              onChange={() => handleVisualSelection(idx)}
+                              className="mt-1"
+                            />
+                            <div className="bg-gray-900/50 p-3 rounded-md border border-brand-slate-dark w-full">
+                              <p className="font-bold text-white">{desc["Image Name"]}</p>
+                              <p className="text-sm text-slate-300">{desc["Caption Plan"]}</p>
+                              <p className="text-xs text-slate-400">Audience: {desc["Target Audience"]}</p>
+                              <p className="text-xs text-slate-400">Keywords: {desc["Keywords"]}</p>
+                              <p className="text-xs text-slate-400">Platform: {desc["Platform"]}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ),
+              }}
+            />
+            <StepCard
+              onReset={resetCms}
+              step={{
+                title: "Publish to CMS",
+                icon: <UploadCloud className="text-neon-cyan" />,
+                isUnlocked: workflowState.visual,
+                isComplete: workflowState.cms,
+                children: (
+                  <>
+                    {!cmsPayload && (
+                      <div className="space-y-4">
+                        <button
+                          onClick={async () => {
+                            // First send selected visuals to Google Sheets
+                            await publishVisualsToSheet();
+                            // Then publish content to CMS with only the blog content
+                            await publishToCms({ post: { content: blogContent } });
+                          }}
+                          disabled={isLoadingCms}
+                          className="w-full bg-neon-cyan hover:opacity-80 text-brand-charcoal font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 disabled:bg-slate-600"
+                        >
+                          {isLoadingCms ? <Loader2 className="animate-spin" /> : <Terminal />} <span>PUBLISH TO CMS</span>
+                        </button>
+                      </div>
+                    )}
+                    {isLoadingCms && <div className="text-center p-4">Publishing to the cosmos...</div>}
+                    {cmsPayload && (
+                      <div className="bg-gray-900/50 p-4 rounded-md border border-brand-slate-dark">
+                        <h4 className="font-bold text-neon-magenta mb-2">CMS Payload</h4>
+                        <pre className="whitespace-pre-wrap font-sans">{JSON.stringify(cmsPayload, null, 2)}</pre>
+                      </div>
+                    )}
+                  </>
+                ),
+              }}
+            />
           </div>
         </div>
       </div>

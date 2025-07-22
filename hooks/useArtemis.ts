@@ -43,6 +43,36 @@ function useArtemis() {
         setCmsPayload(null);
         setSeoData(null);
     };
+    // Reset Blog step and downstream
+    const resetBlog = () => {
+        setBlogContent("");
+        setWorkflowState(prev => ({ ...prev, blog: false, seo: false, visual: false, social: false, cms: false }));
+    };
+    // Reset SEO step and downstream
+    const resetSeo = () => {
+        setSeoData(null);
+        setWorkflowState(prev => ({ ...prev, seo: false, visual: false, social: false, cms: false }));
+    };
+    // Reset Visual step and downstream
+    const resetVisual = () => {
+        setImagePrompt("");
+        setImageScene("");
+        setBodyLanguage("");
+        setVisualDescriptions([]);
+        setSelectedVisuals(new Set());
+        setWorkflowState(prev => ({ ...prev, visual: false, social: false, cms: false }));
+    };
+    // Reset Social step and downstream
+    const resetSocial = () => {
+        setSocialPosts(null);
+        setWorkflowState(prev => ({ ...prev, social: false, cms: false }));
+    };
+    // Reset CMS step
+    const resetCms = () => {
+        setCmsPayload(null);
+        setSanityAssetRef("");
+        setWorkflowState(prev => ({ ...prev, cms: false }));
+    };
 
     // Example: Generate SEO Data using modular content and UI hooks
     const generateSeo = async (topic: any) => {
@@ -194,7 +224,13 @@ function useArtemis() {
         generateBlog,
         generateVisual,
         generateSocial,
-        publishToCms
+        publishToCms,
+        // Reset handlers
+        resetBlog,
+        resetSeo,
+        resetVisual,
+        resetSocial,
+        resetCms
     };
 }
 export default useArtemis;

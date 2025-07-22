@@ -12,14 +12,18 @@ interface Step {
 
 interface StepCardProps {
   step: Step;
+  onReset?: () => void;
 }
 
-const StepCard: React.FC<StepCardProps> = ({ step }) => {
+const StepCard: React.FC<StepCardProps> = ({ step, onReset }) => {
   const { title, icon, isUnlocked, isComplete, children } = step;
 
   return (
     <div className={`border border-brand-slate-dark bg-slate-800/50 rounded-lg transition-all duration-500 ${isUnlocked ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
-      <div className="p-4 border-b border-brand-slate-dark flex items-center justify-between">
+      <div
+        className="p-4 border-b border-brand-slate-dark flex items-center justify-between cursor-pointer"
+        onClick={onReset}
+      >
         <div className="flex items-center space-x-3">
           {icon}
           <h2 className="text-lg font-bold text-neon-cyan tracking-wider">{title}</h2>
