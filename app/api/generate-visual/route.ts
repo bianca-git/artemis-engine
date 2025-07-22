@@ -2,54 +2,54 @@ import { NextResponse } from 'next/server';
 import { appendToSheet } from '../../../utils/googleSheets';
 
 export async function POST(request: Request) {
-  const { prompt } = await request.json();
+  const { prompt, scene, bodyLanguage } = await request.json();
   let error = null;
-  let geminiError = null;
+  let apiError = null;
   let sheetData = null;
 
   try {
-    const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    if (!GEMINI_API_KEY) throw new Error('Missing Gemini API key');
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+    if (!OPENAI_API_KEY) throw new Error('Missing OpenAI API key');
 
-    const geminiPayload = {
-      contents: [
+    const openaiPayload = {
+      model: "gpt-4-turbo",
+      response_format: { type: "json_object" },
+      messages: [
         {
-          role: 'user',
-          parts: [
-            {
-              text: `You are an expert AI visual strategist. Based on the theme "${prompt}", generate a list of 5 detailed image descriptions. For each image, provide a descriptive name, a caption plan, target audience, relevant keywords, and the best social media platform. Format the output as a JSON array of objects, where each object has keys: "Image Name", "Caption Plan", "Target Audience", "Keywords", and "Platform".`
-            }
-          ]
+          role: "system",
+          content: `You are an expert AI visual strategist. Your task is to generate a list of 5 detailed image descriptions based on a theme, a scene, and body language. For each image, provide a descriptive name, a caption plan, target audience, relevant keywords, and the best social media platform. The output should be a JSON object with a single key "image_descriptions" which contains an array of these 5 objects. Each object in the array must have the following keys: "Image Name", "Caption Plan", "Target Audience", "Keywords", and "Platform".`
+        },
+        {
+          role: "user",
+          content: `Generate the image descriptions for the theme: "${prompt}", with the scene: "${scene}", and body language: "${bodyLanguage}"`
         }
       ],
-      generationConfig: {
-        temperature: 0.8,
-        topP: 1,
-        maxOutputTokens: 2048,
-        response_mime_type: "application/json",
-      }
+      temperature: 0.8,
+      max_tokens: 2048,
+      top_p: 1,
     };
 
-    const geminiRes = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+    const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
-      body: JSON.stringify(geminiPayload),
+      body: JSON.stringify(openaiPayload),
     });
 
-    if (!geminiRes.ok) {
-      geminiError = await geminiRes.text();
-      throw new Error(`Gemini image description generation failed: ${geminiRes.status} ${geminiRes.statusText} - ${geminiError}`);
+    if (!openaiRes.ok) {
+      apiError = await openaiRes.text();
+      throw new Error(`OpenAI image description generation failed: ${openaiRes.status} ${openaiRes.statusText} - ${apiError}`);
     }
 
-    const geminiResult = await geminiRes.json();
-    const imageDescriptionsText = geminiResult.candidates[0].content.parts[0].text;
-    const imageDescriptions = JSON.parse(imageDescriptionsText);
+    const openaiResult = await openaiRes.json();
+    const imageDescriptionsText = openaiResult.choices[0].message.content;
+    const imageDescriptionsData = JSON.parse(imageDescriptionsText);
+    const imageDescriptions = imageDescriptionsData.image_descriptions;
 
     if (!Array.isArray(imageDescriptions) || imageDescriptions.length === 0) {
-      throw new Error('No image descriptions returned from Gemini');
+      throw new Error('No image descriptions returned from OpenAI');
     }
 
     const values = imageDescriptions.map(desc => [
@@ -67,8 +67,8 @@ export async function POST(request: Request) {
     error = err?.message || String(err);
     // eslint-disable-next-line no-console
     console.error('Image description generation/upload error:', error);
-    if (geminiError) console.error('Gemini error details:', geminiError);
+    if (apiError) console.error('OpenAI error details:', apiError);
   }
 
-  return NextResponse.json({ success: !error, sheetData, prompt, error, geminiError });
+  return NextResponse.json({ success: !error, sheetData, prompt, error, apiError });
 }
