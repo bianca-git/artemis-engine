@@ -25,6 +25,7 @@ function useArtemis() {
     const [selectedVisuals, setSelectedVisuals] = useState<Set<number>>(new Set());
     const [socialPosts, setSocialPosts] = useState<any>(null);
     const [cmsPayload, setCmsPayload] = useState<any>(null);
+    const [sanityAssetRef, setSanityAssetRef] = useState("");
     // ...existing code for other state
     const [seoData, setSeoData] = useState<any>(null);
     const [topicIdeas, setTopicIdeas] = useState<any[]>([]);
@@ -177,6 +178,8 @@ function useArtemis() {
         selectedVisuals,
         handleVisualSelection,
         publishVisualsToSheet,
+        // CMS asset ref
+        sanityAssetRef, setSanityAssetRef,
         socialPosts, setSocialPosts,
         cmsPayload, setCmsPayload,
         seoData, setSeoData,

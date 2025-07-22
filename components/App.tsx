@@ -10,13 +10,25 @@ const App: React.FC = () => {
   const {
     csvText, setCsvText, handleLoadData, csvData, setCsvData, activeTopic, selectTopic,
     blogContent, generateBlog,
-    imageUrl, imagePrompt, generateVisual, visualLoadingMessage,
+    // Visual workflow
+    imagePrompt, setImagePrompt,
+    imageScene, setImageScene,
+    bodyLanguage, setBodyLanguage,
+    visualDescriptions, selectedVisuals, handleVisualSelection, publishVisualsToSheet,
+    generateVisual, visualLoadingMessage,
+    // SEO
     seoData, generateSeo,
+    // Social
     socialPosts, generateSocial,
-    sanityAssetRef, setSanityAssetRef, cmsPayload, publishToCms,
+    // CMS
+    cmsPayload, publishToCms,
+    // Sanity asset reference
+    sanityAssetRef, setSanityAssetRef,
     workflowState,
     setWorkflowState,
+    // Loading states
     isLoadingBlog, isLoadingVisual, isLoadingSocial, isLoadingCms, isLoadingSeo, isLoadingTopicIdeas,
+    // Topic
     topicKeyword, setTopicKeyword, topicIdeas, amplifyTopic, addIdeaToCsv,
   } = useArtemis();
 
@@ -150,14 +162,84 @@ const App: React.FC = () => {
                 }}/>
             </div>)}
 
-            <StepCard step={{ title: "Generate Visual", icon: <ImageIcon className="text-neon-cyan" />, isUnlocked: workflowState.blog, isComplete: workflowState.visual, children:
-              <>
-                {!imageUrl && <button onClick={() => generateVisual(imagePrompt)} disabled={isLoadingVisual} className="w-full bg-neon-cyan hover:opacity-80 text-brand-charcoal font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 disabled:bg-slate-600"> {isLoadingVisual ? <Loader2 className="animate-spin" /> : <Terminal />} <span>GENERATE VISUAL</span> </button>}
-                {isLoadingVisual && <div className="text-center p-4 flex flex-col items-center space-y-2"><BrainCircuit className="text-neon-magenta animate-pulse" size={24}/><span>{visualLoadingMessage}</span></div>}
-                {imagePrompt && <div className="mt-4 p-3 bg-gray-900/50 rounded-md border border-brand-slate-dark"><p className="text-sm font-bold text-neon-magenta mb-2">Final Image Prompt:</p><p className="text-xs font-mono">{imagePrompt}</p></div>}
-                {imageUrl && <div className="mt-4"><img src={imageUrl} alt="Generated visual" className="rounded-lg border-2 border-neon-magenta shadow-lg shadow-neon-magenta/20 w-full" /></div>}
-              </>
-            }}/>
+            <StepCard step={{
+              title: "Generate Visual",
+              icon: <ImageIcon className="text-neon-cyan" />,
+              isUnlocked: workflowState.blog,
+              isComplete: workflowState.visual,
+              children: (
+                <>
+                  {!visualDescriptions.length && (
+                    <div className="space-y-4">
+                      <input
+                        type="text"
+                        placeholder="Theme"
+                        value={imagePrompt}
+                        onChange={e => setImagePrompt(e.target.value)}
+                        className="w-full bg-gray-900 border border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-neon-magenta"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Scene"
+                        value={imageScene}
+                        onChange={e => setImageScene(e.target.value)}
+                        className="w-full bg-gray-900 border border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-neon-magenta"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Body Language"
+                        value={bodyLanguage}
+                        onChange={e => setBodyLanguage(e.target.value)}
+                        className="w-full bg-gray-900 border border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-neon-magenta"
+                      />
+                      <button
+                        onClick={() => generateVisual(imagePrompt, imageScene, bodyLanguage)}
+                        disabled={isLoadingVisual}
+                        className="w-full bg-neon-cyan hover:opacity-80 text-brand-charcoal font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 disabled:bg-slate-600"
+                      >
+                        {isLoadingVisual ? <Loader2 className="animate-spin" /> : <Terminal />}
+                        <span>GENERATE DESCRIPTIONS</span>
+                      </button>
+                    </div>
+                  )}
+                  {isLoadingVisual && (
+                    <div className="text-center p-4 flex flex-col items-center space-y-2">
+                      <BrainCircuit className="text-neon-magenta animate-pulse" size={24}/>
+                      <span>{visualLoadingMessage}</span>
+                    </div>
+                  )}
+                  {visualDescriptions.length > 0 && (
+                    <div className="space-y-4">
+                      {visualDescriptions.map((desc, idx) => (
+                        <div key={idx} className="flex items-start space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedVisuals.has(idx)}
+                            onChange={() => handleVisualSelection(idx)}
+                            className="mt-1"
+                          />
+                          <div className="bg-gray-900/50 p-3 rounded-md border border-brand-slate-dark w-full">
+                            <p className="font-bold text-white">{desc["Image Name"]}</p>
+                            <p className="text-sm text-slate-300">{desc["Caption Plan"]}</p>
+                            <p className="text-xs text-slate-400">Audience: {desc["Target Audience"]}</p>
+                            <p className="text-xs text-slate-400">Keywords: {desc["Keywords"]}</p>
+                            <p className="text-xs text-slate-400">Platform: {desc["Platform"]}</p>
+                          </div>
+                        </div>
+                      ))}
+                      <button
+                        onClick={publishVisualsToSheet}
+                        disabled={isLoadingVisual || !selectedVisuals.size}
+                        className="w-full bg-neon-magenta hover:opacity-80 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center space-x-2 disabled:bg-slate-600"
+                      >
+                        <Send />
+                        <span>SEND SELECTED TO SHEET</span>
+                      </button>
+                    </div>
+                  )}
+                </>
+              )
+            }} />
 
             <StepCard step={{ title: "Generate Social Posts", icon: <Send className="text-neon-cyan" />, isUnlocked: workflowState.visual, isComplete: workflowState.social, children:
                <>
