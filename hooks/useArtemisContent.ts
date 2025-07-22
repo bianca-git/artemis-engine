@@ -27,12 +27,16 @@ export function useArtemisContent() {
         return response.json();
     };
 
-    const generateVisual = async (prompt: string) => {
+    const generateVisual = async (prompt: string, scene: string, bodyLanguage: string) => {
         const response = await fetch("/api/generate-visual", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt }),
+            body: JSON.stringify({ prompt, scene, bodyLanguage }),
         });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to generate visual descriptions.');
+        }
         return response.json();
     };
 
@@ -53,6 +57,19 @@ export function useArtemisContent() {
         });
         return response.json();
     };
+    
+    const publishVisuals = async (descriptions: any[]) => {
+        const response = await fetch('/api/publish-visuals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ descriptions }),
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to publish visual descriptions.');
+        }
+        return response.json();
+    };
 
     return {
         amplifyTopic,
@@ -61,5 +78,6 @@ export function useArtemisContent() {
         generateVisual,
         generateSocial,
         publishToCms,
+        publishVisuals,
     };
 }

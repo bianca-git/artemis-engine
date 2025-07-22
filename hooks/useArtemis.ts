@@ -19,10 +19,13 @@ function useArtemis() {
     });
     const [blogContent, setBlogContent] = useState("");
     const [imagePrompt, setImagePrompt] = useState("");
-    const [imageUrl, setImageUrl] = useState("");
+    const [imageScene, setImageScene] = useState("");
+    const [bodyLanguage, setBodyLanguage] = useState("");
+    const [visualDescriptions, setVisualDescriptions] = useState<any[]>([]);
+    const [selectedVisuals, setSelectedVisuals] = useState<Set<number>>(new Set());
     const [socialPosts, setSocialPosts] = useState<any>(null);
     const [cmsPayload, setCmsPayload] = useState<any>(null);
-    const [sanityAssetRef, setSanityAssetRef] = useState("");
+    // ...existing code for other state
     const [seoData, setSeoData] = useState<any>(null);
     const [topicIdeas, setTopicIdeas] = useState<any[]>([]);
     const [topicKeyword, setTopicKeyword] = useState("");
@@ -31,10 +34,12 @@ function useArtemis() {
     const resetGeneratedContent = () => {
         setBlogContent("");
         setImagePrompt("");
-        setImageUrl("");
+        setImageScene("");
+        setBodyLanguage("");
+        setVisualDescriptions([]);
+        setSelectedVisuals(new Set());
         setSocialPosts(null);
         setCmsPayload(null);
-        setSanityAssetRef("");
         setSeoData(null);
     };
 
@@ -67,17 +72,15 @@ function useArtemis() {
     };
 
     // Example: Generate Visual
-    const generateVisual = async (prompt: string) => {
+    const generateVisual = async (prompt: string, scene: string, bodyLanguage: string) => {
         ui.setIsLoadingVisual(true);
-        ui.setVisualLoadingMessage("Generating image...");
+        ui.setVisualLoadingMessage("Generating image descriptions...");
         try {
-            const dataResult = await content.generateVisual(prompt);
-            setImageUrl(dataResult.url || "");
-            setSanityAssetRef(dataResult.assetRef || "");
+            const dataResult = await content.generateVisual(prompt, scene, bodyLanguage);
+            setVisualDescriptions(dataResult.descriptions || []);
             setWorkflowState((prev: any) => ({ ...prev, visual: true }));
         } catch (e) {
-            setImageUrl("");
-            setSanityAssetRef("");
+            setVisualDescriptions([]);
         } finally {
             ui.setIsLoadingVisual(false);
             ui.setVisualLoadingMessage("");
@@ -125,7 +128,29 @@ function useArtemis() {
         }
     };
 
-    // Add Idea to CSV
+    // Visual selection handler
+    const handleVisualSelection = (index: number) => {
+        setSelectedVisuals((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(index)) newSet.delete(index);
+            else newSet.add(index);
+            return newSet;
+        });
+    };
+    
+    // Publish selected visuals to Google Sheets
+    const publishVisualsToSheet = async () => {
+        ui.setIsLoadingVisual(true);
+        try {
+            const selected = visualDescriptions.filter((_, idx) => selectedVisuals.has(idx));
+            await content.publishVisuals(selected);
+            setWorkflowState((prev: any) => ({ ...prev, visual: true }));
+        } catch (e) {
+            // handle error
+        } finally {
+            ui.setIsLoadingVisual(false);
+        }
+    };
     const addIdeaToCsv = data.addIdeaToCsv;
 
     // Data loading and topic selection
@@ -146,10 +171,14 @@ function useArtemis() {
         // Local state
         blogContent, setBlogContent,
         imagePrompt, setImagePrompt,
-        imageUrl, setImageUrl,
+        imageScene, setImageScene,
+        bodyLanguage, setBodyLanguage,
+        visualDescriptions,
+        selectedVisuals,
+        handleVisualSelection,
+        publishVisualsToSheet,
         socialPosts, setSocialPosts,
         cmsPayload, setCmsPayload,
-        sanityAssetRef, setSanityAssetRef,
         seoData, setSeoData,
         topicIdeas, setTopicIdeas,
         topicKeyword, setTopicKeyword,

@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { appendToSheet } from '../../../utils/googleSheets';
 
 export async function POST(request: Request) {
   const { prompt, scene, bodyLanguage } = await request.json();
   let error = null;
   let apiError = null;
-  let sheetData = null;
+  let imageDescriptions = null;
 
   try {
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -46,29 +45,18 @@ export async function POST(request: Request) {
     const openaiResult = await openaiRes.json();
     const imageDescriptionsText = openaiResult.choices[0].message.content;
     const imageDescriptionsData = JSON.parse(imageDescriptionsText);
-    const imageDescriptions = imageDescriptionsData.image_descriptions;
+    imageDescriptions = imageDescriptionsData.image_descriptions;
 
     if (!Array.isArray(imageDescriptions) || imageDescriptions.length === 0) {
       throw new Error('No image descriptions returned from OpenAI');
     }
 
-    const values = imageDescriptions.map(desc => [
-      desc["Image Name"],
-      desc["Caption Plan"],
-      desc["Target Audience"],
-      desc["Keywords"],
-      desc["Platform"],
-      'Draft' // Default status
-    ]);
-
-    sheetData = await appendToSheet(values);
-
   } catch (err: any) {
     error = err?.message || String(err);
     // eslint-disable-next-line no-console
-    console.error('Image description generation/upload error:', error);
+    console.error('Image description generation error:', error);
     if (apiError) console.error('OpenAI error details:', apiError);
   }
 
-  return NextResponse.json({ success: !error, sheetData, prompt, error, apiError });
+  return NextResponse.json({ success: !error, descriptions: imageDescriptions, prompt, error, apiError });
 }
