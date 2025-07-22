@@ -24,7 +24,7 @@ export async function appendToSheet(values: string[][]) {
 
   const request = {
     spreadsheetId,
-    range: 'Sheet1!A1', // Assumes you want to append to the first sheet
+    range: 'STUFF!A1', // Assumes you want to append to the STUFF sheet
     valueInputOption: 'USER_ENTERED',
     resource: {
       values,
