@@ -29,7 +29,7 @@ const App: React.FC = () => {
     // Loading states
     isLoadingBlog, isLoadingVisual, isLoadingSocial, isLoadingCms, isLoadingSeo, isLoadingTopicIdeas,
     // Topic
-    topicKeyword, setTopicKeyword, topicIdeas, amplifyTopic, addIdeaToCsv,
+    topicKeyword, setTopicKeyword, topicIdeas, setTopicIdeas, amplifyTopic, addIdeaToCsv,
   } = useArtemis();
 
   return (
@@ -51,7 +51,13 @@ const App: React.FC = () => {
           {/* --- CONTROL PANEL (LEFT) --- */}
           <div className="lg:col-span-1 space-y-6">
             <div className="border border-neon-magenta/50 bg-slate-800/50 rounded-lg p-4">
-               <h3 className="font-bold text-neon-magenta text-lg mb-2 flex items-center"><Sparkles className="mr-2" size={20}/>Topic Amplifier ✨</h3>
+               <div className="flex items-center justify-between mb-2">
+                 <h3 className="font-bold text-neon-magenta text-lg flex items-center"><Sparkles className="mr-2" size={20}/>Topic Amplifier ✨</h3>
+                 <button
+                   onClick={() => { setTopicKeyword(''); setTopicIdeas([]); }}
+                   className="text-sm text-gray-400 hover:text-white"
+                 >Clear</button>
+               </div>
                <p className="text-sm text-slate-400 mb-3">Enter a keyword to brainstorm new topics.</p>
                <div className="flex space-x-2">
                 <input type="text" placeholder="e.g., 'Excel automation'" value={topicKeyword} onChange={(e) => setTopicKeyword(e.target.value)} className="flex-grow bg-gray-900 border border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-neon-magenta" />
