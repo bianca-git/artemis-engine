@@ -2,16 +2,23 @@ import { google } from 'googleapis';
 
 const sheets = google.sheets('v4');
 
+// Use JWT for service account authentication
 async function getAuth() {
-  const credentials = {
-    client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-    private_key: process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  };
-  const auth = new google.auth.GoogleAuth({
-    credentials,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  const rawKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY || '';
+  // Replace escaped newlines with actual newlines
+  const privateKey = rawKey.includes('\\n')
+    ? rawKey.replace(/\\n/g, '\n')
+    : rawKey;
+  const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
+  const scopes = ['https://www.googleapis.com/auth/spreadsheets'];
+  const jwtClient = new google.auth.JWT({
+    email: clientEmail,
+    key: privateKey,
+    scopes,
   });
-  return auth;
+  // Authorize client
+  await jwtClient.authorize();
+  return jwtClient;
 }
 
 export async function appendToSheet(values: string[][]) {

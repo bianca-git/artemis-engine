@@ -29,8 +29,8 @@ export async function POST(request: Request) {
   }
 
   // Prepare Sanity post document (no image reference)
+  // Create new post document
   const doc = {
-    ...post,
     _type: 'post',
     slug: typeof post.slug === 'string' ? { current: post.slug } : post.slug,
     author: post.author,
@@ -43,11 +43,10 @@ export async function POST(request: Request) {
     preview: post.preview,
     publishedAt: post.publishedAt,
     excerpt: post.excerpt,
-    _id: post._id || undefined,
   };
 
-  // Create or update the post in Sanity as a draft
-  const result = await client.createOrReplace(doc);
+  // Create the post in Sanity as a draft
+  const result = await client.create(doc);
 
   return NextResponse.json({ status: 'success', result });
 }
