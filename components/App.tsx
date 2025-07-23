@@ -39,7 +39,7 @@ const App: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <header className="text-center mb-8">
           <h1
-            className="text-4xl sm:text-5xl font-bold text-white tracking-widest uppercase"
+            className="text-4xl sm:text-5xl font-bold tracking-widest uppercase bg-brand-gradient bg-clip-text text-transparent"
             style={{
               WebkitBackgroundClip: 'text',
             }}
