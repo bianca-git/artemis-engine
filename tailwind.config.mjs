@@ -1,5 +1,8 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+import typography from '@tailwindcss/typography';
+import daisyui from 'daisyui';
+
+export default {
   content: [
     "./app/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
@@ -27,6 +30,11 @@ module.exports = {
     },
   },
   plugins: [
-    require('@tailwindcss/typography'),
+    typography,
+    daisyui,
   ],
+  // DaisyUI configuration: enable all themes
+  daisyui: {
+    themes: true,
+  },
 };
