@@ -4,4 +4,4 @@ const nextConfig = {
   // experimental options removed for Next.js 14+
 };
 
-module.exports = nextConfig;
+export default nextConfig;
