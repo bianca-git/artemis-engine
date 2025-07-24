@@ -33,8 +33,8 @@ export default {
     typography,
     daisyui,
   ],
-  // DaisyUI configuration: enable all themes
+  // DaisyUI configuration: enable all shipped themes
   daisyui: {
-    themes: true,
+    themes: ["all"],
   },
 };
