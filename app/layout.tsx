@@ -1,4 +1,5 @@
 import "./globals.css";
+import Head from "next/head";
 
 export const metadata = {
   title: "ARTEMIS",
@@ -8,13 +9,15 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
+      <Head>
         {/* Google Identity Services script */}
         <script src="https://accounts.google.com/gsi/client" async defer></script>
-      </head>
-      <body className="bg-gray-900 text-slate-300 min-h-screen font-sans">
+      </Head>
+      <body className="bg-base-100 min-w-screen min-h-screen ">
         {children}
       </body>
     </html>
   );
 }
+export const dynamic = "force-dynamic"; // Ensures the layout is always re-rendered
+export const revalidate = 0; // Disables static generation for this layout

@@ -1,6 +1,40 @@
+
 import React, { useEffect, useState } from "react";
 
-const themes = ["light", "dark", "magenta", "cyan"];
+const themes = [
+  "light",
+  "dark",
+  "cupcake",
+  "bumblebee",
+  "emerald",
+  "corporate",
+  "synthwave",
+  "retro",
+  "cyberpunk",
+  "valentine",
+  "halloween",
+  "garden",
+  "forest",
+  "aqua",
+  "lofi",
+  "pastel",
+  "fantasy",
+  "wireframe",
+  "black",
+  "luxury",
+  "dracula",
+  "cmyk",
+  "autumn",
+  "business",
+  "acid",
+  "lemonade",
+  "night",
+  "coffee",
+  "winter",
+  "dim",
+  "nord",
+  "sunset",
+];
 
 const ThemeSwitcher = () => {
   const [theme, setTheme] = useState("light");
@@ -26,15 +60,21 @@ const ThemeSwitcher = () => {
   if (!mounted) return null;
 
   return (
-    <form>
-      <label htmlFor="theme-select">Theme:</label>
-      <select id="theme-select" value={theme} onChange={handleChange}>
-        {themes.map(theme => (
-          <option key={theme} value={theme}>{theme}</option>
+    <div className="form-control">
+      <label className="label">
+        <span className="label-text">Theme:</span>
+      </label>
+      <select value={theme} onChange={handleChange} className="select select-bordered w-full max-w-xs">
+        {themes.map((t) => (
+          <option key={t} value={t}>
+            {t}
+          </option>
         ))}
       </select>
-    </form>
+    </div>
   );
 };
 
 export default ThemeSwitcher;
+
+

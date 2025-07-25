@@ -9,6 +9,10 @@
   logs: true;
 }
 
+body {
+  @apply bg-base-100 text-base-content font-light;
+}
+
 /* Tasteful rainbow gradient hover button for Load CSV Data */
 .rainbow-hover-btn {
   transition: box-shadow 0.8s, border 0.8s;
