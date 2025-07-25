@@ -1,39 +1,17 @@
 // components/StepCard.tsx
 import React from "react";
-import { CheckCircle } from "lucide-react";
 
-interface Step {
-  title: string;
-  icon: React.ReactNode;
-  isUnlocked: boolean;
-  isComplete: boolean;
-  children: React.ReactNode;
-}
-
-interface StepCardProps {
-  step: Step;
-  onReset?: () => void;
-}
-
-const StepCard: React.FC<StepCardProps> = ({ step, onReset }) => {
-  const { title, icon, isUnlocked, isComplete, children } = step;
-
+const StepCard = ({ step, onReset }) => {
   return (
-    <div className={`border border-brand-slate-dark bg-slate-800/50 rounded-lg transition-all duration-500 ${isUnlocked ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
-      <div
-        className="p-4 border-b border-brand-slate-dark flex items-center justify-between cursor-pointer"
-        onClick={onReset}
-      >
-        <div className="flex items-center space-x-3">
-          {icon}
-          <h2 className="text-lg font-bold text-neon-cyan tracking-wider">{title}</h2>
-        </div>
-        {isComplete && <CheckCircle className="text-feedback-success" size={20} />}
+    <section>
+      <header>
+        <h3>{step.title}</h3>
+        {onReset && <button onClick={onReset}>Reset</button>}
+      </header>
+      <div>
+        {step.children}
       </div>
-      <div className="p-6">
-        {children}
-      </div>
-    </div>
+    </section>
   );
 };
 

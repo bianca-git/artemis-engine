@@ -1,3 +1,6 @@
+@import 'tailwindcss/tailwind.css';
+@plugin "daisyui";
+
 /* Artemis custom styles */
 .artemis-title {
   text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
