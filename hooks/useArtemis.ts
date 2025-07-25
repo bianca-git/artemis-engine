@@ -133,7 +133,7 @@ function useArtemis() {
     };
 
     // Example: Publish to CMS
-    const publishToCms = async (payload: any) => {
+    const publishToCms = async (payload: any, blogContent: string, seoData: any, socialPosts: any, visualDescriptions: any[], sanityAssetRef: string) => {
         ui.setIsLoadingCms(true);
         try {
             const dataResult = await content.publishToCms(payload);
