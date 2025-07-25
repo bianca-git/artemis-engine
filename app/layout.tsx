@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Google Identity Services script */}
         <script src="https://accounts.google.com/gsi/client" async defer></script>
       </Head>
-      <body className="bg-base-100 min-w-screen min-h-screen ">
+      <body className="bg-base-100 min-h-screen p-0 m-0 mx-auto">
         {children}
       </body>
     </html>
