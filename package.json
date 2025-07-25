@@ -12,11 +12,11 @@
   },
   "dependencies": {
     "@sanity/client": "^7.8.1",
+    "daisyui": "^5.0.46",
     "google-auth-library": "^10.1.0",
     "googleapis": "^154.0.0",
     "lucide-react": "^0.525.0",
-    "daisyui": "^5.0.46",
-    "next": "15.4.3",
+    "next": "15.4.4",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },

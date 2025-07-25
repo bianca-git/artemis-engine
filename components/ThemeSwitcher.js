@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 const themes = ["light", "dark", "magenta", "cyan"];
 
 const ThemeSwitcher = () => {
-  const [theme, setTheme] = useState("cynberpunk");
+  const [theme, setTheme] = useState("cyberpunk");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
