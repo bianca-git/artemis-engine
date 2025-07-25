@@ -42,8 +42,30 @@ const GenerationSteps = ({
               )}
               {isLoadingSeo && <div className="alert alert-info">Generating SEO...</div>}
               {seoData && (
-                <div className="mockup-code bg-base-200 p-4 rounded-md border border-base-300">
-                  <pre>{JSON.stringify(seoData, null, 2)}</pre>
+                <div className="mockup-window bg-base-200 p-4 rounded-md border border-base-300">
+                  {/* SEO metaDescription as title, keywords as pills */}
+                  <div className="mb-4 text-2xl font-bold text-center text-cyan-600">
+                    {seoData.metaDescription || seoData.description || "SEO Meta Description"}
+                  </div>
+                  {seoData.keywords && Array.isArray(seoData.keywords) && seoData.keywords.length > 0 && (
+                    <div className="flex flex-wrap gap-2 justify-center mb-2">
+                      {seoData.keywords.map((kw, idx) => (
+                        <span key={idx} className="badge badge-outline badge-lg bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full font-semibold">
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {/* Fallback for keywords as string */}
+                  {seoData.keywords && typeof seoData.keywords === "string" && (
+                    <div className="flex flex-wrap gap-2 justify-center mb-2">
+                      {seoData.keywords.split(/,|;/).map((kw, idx) => (
+                        <span key={idx} className="badge badge-outline badge-lg bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full font-semibold">
+                          {kw.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </>
