@@ -33,7 +33,11 @@ const App = () => {
         <p className="text-lg mt-2 font-light tracking-wider">Automated Real-Time Engagement & Marketing Intelligence System</p>
         <ThemeSwitcher />
       </header>
-
+<div className="p-4">
+  <button className="btn btn-primary">primary</button>
+  <button className="btn btn-secondary">secondary</button>
+  <button className="btn btn-accent">accent</button>
+</div>
       <section>
         <div className="card w-full bg-base-100 shadow-xl mb-4">
           <div className="card-body">
