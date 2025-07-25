@@ -8,10 +8,6 @@ const GenerationSteps = ({
   generateSeo,
   isLoadingSeo,
   activeTopic,
-  resetSocial,
-  socialPosts,
-  generateSocial,
-  isLoadingSocial,
   resetVisual,
   visualDescriptions,
   generateVisual,
@@ -55,35 +51,7 @@ const GenerationSteps = ({
         }}
       />
     </section>
-    <section>
-      <StepCard
-        onReset={resetSocial}
-        step={{
-          title: "Generate Social Posts",
-          isUnlocked: workflowState.topic,
-          isComplete: workflowState.social,
-          children: (
-            <>
-              {!socialPosts && (
-                <button
-                  className="btn btn-primary btn-block"
-                  onClick={() => generateSocial(activeTopic?.TITLE ?? "")}
-                  disabled={isLoadingSocial}
-                >
-                  GENERATE SOCIAL
-                </button>
-              )}
-              {isLoadingSocial && <div className="alert alert-info">Generating Social Posts...</div>}
-              {socialPosts && (
-                <div className="mockup-code bg-base-200 p-4 rounded-md border border-base-300">
-                  <pre>{JSON.stringify(socialPosts, null, 2)}</pre>
-                </div>
-              )}
-            </>
-          ),
-        }}
-      />
-    </section>
+    {/* Generate Social Posts section removed */}
     <section>
       <StepCard
         onReset={resetVisual}
@@ -118,14 +86,14 @@ const GenerationSteps = ({
         onReset={resetCms}
         step={{
           title: "Publish to CMS",
-          isUnlocked: workflowState.blog || workflowState.visual || workflowState.social || workflowState.seo,
+          isUnlocked: workflowState.blog || workflowState.visual || workflowState.seo,
           isComplete: workflowState.cms,
           children: (
             <>
               {!cmsPayload && (
                 <button
                   className="btn btn-primary btn-block"
-                  onClick={() => publishToCms(activeTopic, blogContent, seoData, socialPosts, visualDescriptions, sanityAssetRef)}
+                  onClick={() => publishToCms(activeTopic, blogContent, seoData, visualDescriptions, sanityAssetRef)}
                   disabled={isLoadingCms}
                 >
                   PUBLISH TO CMS
