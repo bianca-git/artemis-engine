@@ -83,6 +83,7 @@ const GenerationSteps = ({
           isComplete: workflowState.visual,
           children: (
             <>
+              {/* Add Generate Visual button if not present */}
               {!visualDescriptions && (
                 <button
                   className="btn btn-primary btn-block"
@@ -94,9 +95,18 @@ const GenerationSteps = ({
               )}
               {isLoadingVisual && <div className="alert alert-info">Generating Visual...</div>}
               {visualDescriptions && (
-                <div className="mockup-code bg-base-200 p-4 rounded-md border border-base-300">
+                <div className="mockup-code bg-base-200 p-4 rounded-md border border-base-300 mb-4">
                   <pre>{JSON.stringify(visualDescriptions, null, 2)}</pre>
                 </div>
+              )}
+              {/* Add button to send visualDescriptions to Google Sheets */}
+              {visualDescriptions && (
+                <button
+                  className="btn btn-accent btn-block mt-2"
+                  onClick={() => publishVisualToSheets(visualDescriptions)}
+                >
+                  SEND TO GOOGLE SHEETS
+                </button>
               )}
             </>
           ),
@@ -123,8 +133,8 @@ const GenerationSteps = ({
               )}
               {isLoadingCms && <div className="alert alert-info">Publishing to CMS...</div>}
               {cmsPayload && (
-                <div className="mockup-code bg-base-200 p-4 rounded-md border border-base-300">
-                  <pre>{JSON.stringify(cmsPayload, null, 2)}</pre>
+                <div className="alert alert-success">
+                  <h1>Success!</h1>
                 </div>
               )}
             </>
@@ -135,4 +145,26 @@ const GenerationSteps = ({
   </>
 );
 
+function publishVisualToSheets(visualDescriptions: any): void {
+  // Example: POST visualDescriptions to an API endpoint for Google Sheets integration
+  fetch("/api/publish-visual-sheets", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ visualDescriptions }),
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("Failed to publish visuals to Google Sheets");
+      return res.json();
+    })
+    .then(() => {
+      alert("Visual descriptions sent to Google Sheets!");
+    })
+    .catch((err) => {
+      alert("Error sending to Google Sheets: " + err.message);
+    });
+}
+
 export default GenerationSteps;
+
