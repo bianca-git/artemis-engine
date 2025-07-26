@@ -64,16 +64,20 @@ const LoadDataSection = ({
             type="file"
             accept=".csv,text/csv"
             style={{ display: "none" }}
-            onChange={e => {
+            onChange={async e => {
               const file = e.target.files?.[0];
               if (!file) return;
               const reader = new FileReader();
-              reader.onload = event => {
+              reader.onload = async event => {
                 const text = event.target?.result;
                 if (typeof text === "string") {
                   setCsvText(text);
-                  handleLoadData();
-                  setTimeout(() => handleLoadData(), 0);
+                  await handleLoadData();
+                  // Immediately unlock topic selection step
+                  setWorkflowState(prev => ({
+                    ...prev,
+                    topic: true,
+                  }));
                 }
               };
               reader.readAsText(file);

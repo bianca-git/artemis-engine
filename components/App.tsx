@@ -8,7 +8,6 @@ import TopicAmplifier from "./TopicAmplifier";
 import LoadDataSection from "./LoadDataSection";
 import SelectTopicSection from "./SelectTopicSection";
 import GenerationSteps from "./GenerationSteps";
-import BlogSection from "./BlogSection";
 
 const App = () => {
   const csvRefreshTimeout = useRef(null);
@@ -35,7 +34,6 @@ const App = () => {
           <SelectTopicSection {...artemis} />
         </div>
         <div className="lg:col-span-2 space-y-8">
-          <BlogSection {...artemis} />
           <GenerationSteps {...artemis} />
         </div>
       </main>

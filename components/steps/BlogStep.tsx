@@ -1,5 +1,5 @@
 import React from "react";
-import StepCard from "./StepCard";
+import StepCard from "../StepCard";
 
 const BlogSection = ({
   workflowState,
@@ -18,16 +18,19 @@ const BlogSection = ({
         isComplete: workflowState.blog,
         children: (
           <>
-            {!blogContent && (
-              <button
-                className="btn btn-primary btn-block"
-                onClick={() => generateBlog(activeTopic)}
-                disabled={isLoadingBlog}
-              >
-                GENERATE BLOG
-              </button>
-            )}
+                      {!blogContent && (
+              <div className="flex flex-col gap-2">
+                <button
+                  className="btn btn-primary btn-block"
+                  onClick={() => generateBlog(activeTopic)}
+                  disabled={isLoadingBlog}
+                >
+                  GENERATE BLOG
+                </button>
             {isLoadingBlog && <div className="alert alert-info">The Siren is contemplating...</div>}
+              </div>
+            )}
+      
             {blogContent && (
               <div className="w-full max-w-3xl mx-auto bg-white dark:bg-base-300 rounded-xl shadow-lg border border-base-300 p-8">
                 {/* Main blog content with enhanced typography and code styling */}
