@@ -10,7 +10,7 @@ const VisualStep = ({
   activeTopic,
   resetVisual,
 }) => {
-  // Local state for free text fields
+  // Free text fields for additional prompt context
   const [imageScene, setImageScene] = useState("");
   const [bodyLanguage, setBodyLanguage] = useState("");
 
@@ -20,10 +20,11 @@ const VisualStep = ({
         onReset={resetVisual}
         step={{
           title: "Generate Visual",
-          isComplete: workflowState.seo,
-          isUnlocked: workflowState.visual,
+          isUnlocked: workflowState.seo,
+          isComplete: workflowState.visual,
           children: (
             <>
+              {/* Show input fields and button if visuals not yet generated */}
               {!visualDescriptions && (
                 <div className="flex flex-col gap-3 mb-4">
                   <input
@@ -50,6 +51,7 @@ const VisualStep = ({
                 </div>
               )}
               {isLoadingVisual && <div className="alert alert-info">Generating Visual...</div>}
+              {/* Show results and Google Sheets button after generation */}
               {visualDescriptions && (
                 <>
                   <div className="mockup-code bg-base-200 p-4 rounded-md border border-base-300 mb-4">
