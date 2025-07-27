@@ -24,8 +24,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
+    "@portabletext/block-tools": "^2.0.0",
     "@types/node": "24.1.0",
     "@types/react": "19.1.8",
+    "jsdom": "^26.1.0",
     "rimraf": "latest",
     "typescript": "5.8.3"
   }
