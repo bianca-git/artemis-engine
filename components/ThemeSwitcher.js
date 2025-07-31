@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 
 const themes = [
@@ -121,38 +120,33 @@ const ThemeSwitcher = () => {
 
   return (
     <div className="form-control">
-      <select value={theme} onChange={handleChange} className="select select-bordered w-full max-w-xs" style={{ display: "inline-flex", justifyContent: "space-between" }}>
+      <select value={theme} onChange={handleChange} className="select select-bordered w-full max-w-xs">
         {themes.map((t) => {
-          const colors = themeColors[t] || ["#e5e7eb", "#9ca3af", "#374151"];
           const isDark = darkThemes.has(t);
+          // Show only text and emoji in option
           return (
             <option key={t} value={t}>
-              {/* Swatch and name */}
-              <span style={{ display: "inline-flex" }}>
-                {colors.map((c, i) => (
-                  <span
-                    key={i}
-                    style={{
-                      display: "inline-block",
-                      width: 10,
-                      height: 10,
-                      background: c,
-                      borderRadius: "50%",
-                      marginRight: 2,
-                      border: "1px solid #ccc",
-                    }}
-                  />
-                ))}
-                <span style={{ marginLeft: 6 }}>{t}</span>
-                {/* Dark mode indicator to the right, same color as text */}
-                <span style={{ fontSize: 14, marginLeft: 8, color: "inherit" }}>
-                  {isDark ? "🌌" : "🌅"}
-                </span>
-              </span>
+              {t} {isDark ? "🌌" : "🌅"}
             </option>
           );
         })}
       </select>
+      {/* Swatches preview below the select */}
+      <div className="flex gap-2 mt-2">
+        {(themeColors[theme] || ["#e5e7eb", "#9ca3af", "#374151"]).map((c, i) => (
+          <span
+            key={i}
+            style={{
+              display: "inline-block",
+              width: 16,
+              height: 16,
+              background: c,
+              borderRadius: "50%",
+              border: "1px solid #ccc",
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 };
