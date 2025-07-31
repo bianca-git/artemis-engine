@@ -32,6 +32,7 @@ const TopicWorkflowSection = ({
         amplifyTopic={amplifyTopic}
         isLoadingTopicIdeas={isLoadingTopicIdeas}
         addIdeaToCsv={addIdeaToCsv}
+        setCsvText={setCsvText}
       />
       <LoadDataSection
         csvText={csvText}

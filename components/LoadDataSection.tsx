@@ -13,37 +13,25 @@ const LoadDataSection = ({
   <section>
     <div className="card w-full bg-base-100 shadow-xl mb-4">
       <div className="card-body">
-        <h2 className="card-title">1. Load Data</h2>
-        {(csvText.length > 0 || csvData.length > 0) && (
-          <button
-            type="button"
-            className="btn btn-warning btn-sm mb-2 w-fit"
-            onClick={() => {
-              setCsvText("ID,TITLE,CONTENT,VISUAL");
-              setCsvData([]);
-              selectTopic(null);
-              setWorkflowState({
-                topic: false,
-                blog: false,
-                visual: false,
-                seo: false,
-                social: false,
-                cms: false,
-              });
-            }}
-          >
-            Reset
-          </button>
-        )}
+        <h2 className="card-title">Load Data</h2>
+        <p>Paste or upload CSV data to load into the topic workflow.</p>
         <textarea
           className="textarea textarea-bordered w-full h-32 mb-2"
           value={csvText}
-          onChange={e => {
-            setCsvText(e.target.value);
-            if (csvRefreshTimeout.current) clearTimeout(csvRefreshTimeout.current);
-            csvRefreshTimeout.current = setTimeout(() => {
+          onChange={e => setCsvText(e.target.value)}
+          placeholder="Paste your CSV data here..."
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !csvRefreshTimeout.current) {
+              e.preventDefault();
               handleLoadData();
-            }, 500);
+              setWorkflowState(prev => ({
+                ...prev,
+                topic: true,
+              }));
+            }
+          }}
+          onLoad={() => {
+            handleLoadData();
           }}
           onBlur={() => {
             handleLoadData();
@@ -81,9 +69,30 @@ const LoadDataSection = ({
                 }
               };
               reader.readAsText(file);
-              e.target.value = "";
+              e.target.value = "";  // Reset file input to allow re-uploading the same file if needed       
             }}
           />
+          {(csvText.length > 0 || csvData.length > 0) && (
+            <button
+              type="button"
+              className="btn btn-warning"
+              onClick={() => {
+                setCsvText("ID,TITLE,CONTENT,VISUAL");
+                setCsvData([]);
+                selectTopic(null);
+                setWorkflowState({
+                  topic: false,
+                  blog: false,
+                  visual: false,
+                  seo: false,
+                  social: false,
+                  cms: false,
+                });
+              }}
+            >
+              Reset
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -19,7 +19,9 @@ const response = await openai.responses.create({
     }
   }
 });
-    return NextResponse.json(response);
+console.log(response.output_text);
+
+    return NextResponse.json({ output_text: response.output_text });
   } catch (error) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
