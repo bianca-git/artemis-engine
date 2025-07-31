@@ -3,10 +3,7 @@
 import React, { useRef } from "react";
 import useArtemis from "../hooks/useArtemis";
 import ThemeSwitcher from "./ThemeSwitcher";
-import StepCard from "./StepCard";
-import TopicAmplifier from "./TopicAmplifier";
-import LoadDataSection from "./LoadDataSection";
-import SelectTopicSection from "./SelectTopicSection";
+import TopicWorkflowSection from "./TopicWorkflowSection";
 import GenerationSteps from "./GenerationSteps";
 
 const App = () => {
@@ -28,10 +25,8 @@ const App = () => {
         </div>
       </div>
       <main className="p-4 grid grid-cols-1 lg:grid-cols-3 gap-8 min-w-7xl max-w-7xl mx-auto">
-        <div className="lg:col-span-1 space-y-8">
-          <TopicAmplifier {...artemis} />
-          <LoadDataSection {...artemis} csvRefreshTimeout={csvRefreshTimeout} />
-          <SelectTopicSection {...artemis} />
+        <div className="lg:col-span-1">
+          <TopicWorkflowSection {...artemis} csvRefreshTimeout={csvRefreshTimeout} />
         </div>
         <div className="lg:col-span-2 space-y-8">
           <GenerationSteps {...artemis} />
