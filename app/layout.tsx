@@ -2,7 +2,7 @@ import "./globals.css";
 import Head from "next/head";
 
 export const metadata = {
-  title: "ARTEMIS",
+  title: "A.R.T.E.M.I.S",
   description: "Automated Real-Time Engagement & Marketing Intelligence System",
 };
 
@@ -11,6 +11,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <Head>
         {/* Google Identity Services script */}
+        <link rel="icon" href="/favicon.ico" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="author" content="Bianca Wilkinson" />
+        <meta name="robots" content="noindex, nofollow" />
         <script src="https://accounts.google.com/gsi/client" async defer></script>
       </Head>
       <body className="bg-base-100 min-h-screen p-0 m-0 mx-auto">
