@@ -26,14 +26,10 @@ const TopicAmplifier = ({
   };
 
   const handleAmplify = async (keyword) => {
-    // Run amplifyTopic and wait for it to finish
-    const result = await amplifyTopic(keyword);
-        console.log("Amplify response returned in TopicAmplifier.tsx");
-    console.log(result);
-    // After amplification, clear the input and populate csvText
+    const ideas = await amplifyTopic(keyword);
     if (setTopicKeyword) setTopicKeyword("");
     if (setCsvText) {
-      setCsvText(ideasToCsv(result?.ideas || topicIdeas));
+      setCsvText(ideasToCsv(ideas));
     }
   };
 

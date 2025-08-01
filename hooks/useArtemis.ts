@@ -154,8 +154,10 @@ function useArtemis() {
         try {
             const dataResult = await content.amplifyTopic(keyword);
             setTopicIdeas(dataResult.ideas || []);
+            return dataResult.ideas || [];
         } catch (e) {
             setTopicIdeas([]);
+            return [];
         } finally {
             ui.setIsLoadingTopicIdeas(false);
         }
