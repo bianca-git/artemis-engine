@@ -3,6 +3,18 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   const { blog } = await request.json();
+  
+  // Skip API call during build
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ 
+      posts: {
+        linkedin: "Mock LinkedIn post content",
+        twitter: "Mock Twitter post content", 
+        instagram: "Mock Instagram post content"
+      }
+    });
+  }
+  
   // Call OpenAI GPT-4.1 nano for social post generation
   const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',

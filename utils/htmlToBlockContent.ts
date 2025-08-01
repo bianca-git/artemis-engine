@@ -1,3 +1,7 @@
+// Commented out as we're generating Portable Text directly in the API
+// This can be used later if needed for HTML to Portable Text conversion
+
+/*
 import { JSDOM } from 'jsdom';
 import { htmlToBlocks } from '@portabletext/block-tools';
 
@@ -44,3 +48,7 @@ export async function htmlToBlockContent(html: string) {
 
     return blocks;
 }
+*/
+
+// Placeholder export to keep the file valid
+export const placeholderMessage = "HTML to Block Content conversion is temporarily disabled";

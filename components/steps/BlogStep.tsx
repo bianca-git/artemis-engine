@@ -1,10 +1,12 @@
 import React from "react";
 import StepCard from "../StepCard";
+import PortableTextRenderer from "../PortableTextRenderer";
 
 const BlogSection = ({
   workflowState,
   resetBlog,
   blogContent,
+  portableTextContent,
   generateBlog,
   isLoadingBlog,
   activeTopic,
@@ -18,7 +20,7 @@ const BlogSection = ({
         isComplete: workflowState.blog,
         children: (
           <>
-                      {!blogContent && (
+            {!portableTextContent?.length && !blogContent && (
               <div className="flex flex-col gap-2">
                 <button
                   className="btn btn-primary btn-block"
@@ -27,11 +29,16 @@ const BlogSection = ({
                 >
                   GENERATE BLOG
                 </button>
-            {isLoadingBlog && <div className="alert alert-info">The Siren is contemplating...</div>}
+                {isLoadingBlog && <div className="alert alert-info">The Siren is contemplating...</div>}
               </div>
             )}
       
-            {blogContent && (
+            {portableTextContent?.length > 0 && (
+              <PortableTextRenderer content={portableTextContent} />
+            )}
+            
+            {/* Fallback to HTML rendering if no portable text is available */}
+            {!portableTextContent?.length && blogContent && (
               <div className="w-full max-w-3xl mx-auto bg-white dark:bg-base-300 rounded-xl shadow-lg border border-base-300 p-8">
                 {/* Main blog content with enhanced typography and code styling */}
                 <div
