@@ -28,7 +28,7 @@ function useArtemis() {
     const [imageScene, setImageScene] = useState("");
     const [bodyLanguage, setBodyLanguage] = useState("");
     const [visualDescriptions, setVisualDescriptions] = useState<VisualDescription[]>([]);
-    const [selectedVisuals, setSelectedVisuals] = useState<Map<number, boolean>>(new Map());
+    const [selectedVisuals, setSelectedVisuals] = useState<Set<number>>(new Set());
     const [socialPosts, setSocialPosts] = useState<SocialPost[] | null>(null);
     const [cmsPayload, setCmsPayload] = useState<any>(null);
     const [sanityAssetRef, setSanityAssetRef] = useState("");
