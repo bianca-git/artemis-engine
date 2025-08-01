@@ -62,7 +62,7 @@ const TopicAmplifier = ({
               Amplify
             </button>
           </div>
-          {isLoadingTopicIdeas && <div className="alert alert-info">Amplifying ideas...</div>}
+          {isLoadingTopicIdeas && <div className="alert alert-info">Amplifying {topicKeyword}...</div>}
           {topicIdeas.length > 0 && (
             <ul className="menu bg-base-200 rounded-box">
               {topicIdeas.map((idea, i) => (
