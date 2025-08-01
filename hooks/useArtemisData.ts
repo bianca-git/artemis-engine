@@ -1,6 +1,5 @@
-
-import { useState } from "react";
 import { parseCsvData } from "../utils/helpers";
+import { useState, useEffect } from "react";
 
 // Types for better clarity
 type Topic = {
@@ -52,6 +51,10 @@ export function useArtemisData() {
         setCsvData(mapToTopic(parseCsvData(newCsvText)));
         handleLoadData();
     };
+
+    useEffect(() => {
+        handleLoadData();
+    }, [csvText]);
 
     return {
         csvText, setCsvText, csvData, setCsvData, activeTopic, setActiveTopic,

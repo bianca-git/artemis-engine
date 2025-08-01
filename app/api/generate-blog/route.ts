@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     body: JSON.stringify({
       assistant_id: "asst_g3uj9k0vKr50t0RTd4I5GZHz",
       messages: [
-        { role: 'user', content: `Write a detailed blog post about ${topic?.CONTENT}.` },
+        { role: 'user', content: `Write a detailed blog post about ${topic?.TITLE}. The content should cover the following points: ${topic?.CONTENT}.` },
       ],
     }),
   });

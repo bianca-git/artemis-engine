@@ -19,9 +19,9 @@ export async function POST(request: Request) {
         }
       }
     });
-    console.log(response.output_text);
+    console.log("Amplify response returned in route.ts");
 
-    return NextResponse.json({ output_text: response.output_text });
+    return NextResponse.json({ ideas: response.output_text });
   } catch (error) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }

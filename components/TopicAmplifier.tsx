@@ -11,23 +11,29 @@ const TopicAmplifier = ({
   setCsvText,
 }) => {
   // Helper to convert ideas to CSV string
-  const ideasToCsv = (ideas) => {
-    if (!ideas || ideas.length === 0) return '';
+  const ideasToCsv = (ideas: any[] | string): string => {
+    if (!ideas) return '';
+    if (typeof ideas === 'string') {
+      // Already a CSV string, just return it
+      return ideas;
+    }
+    if (!Array.isArray(ideas) || ideas.length === 0) return '';
     const headers = Object.keys(ideas[0]);
-    const rows = ideas.map(idea => headers.map(h => JSON.stringify(idea[h] ?? "")).join(","));
+    const rows = ideas.map((idea: Record<string, any>) =>
+      headers.map(h => JSON.stringify(idea[h] ?? "")).join(",")
+    );
     return [headers.join(","), ...rows].join("\n");
   };
 
   const handleAmplify = async (keyword) => {
     // Run amplifyTopic and wait for it to finish
     const result = await amplifyTopic(keyword);
-    // After amplification, clear and populate csvText
+        console.log("Amplify response returned in TopicAmplifier.tsx");
+    console.log(result);
+    // After amplification, clear the input and populate csvText
+    if (setTopicKeyword) setTopicKeyword("");
     if (setCsvText) {
-      setCsvText("");
-      // Use topicIdeas if amplifyTopic doesn't return ideas directly
-      setTimeout(() => {
-        setCsvText(ideasToCsv(result?.ideas || topicIdeas));
-      }, 0);
+      setCsvText(ideasToCsv(result?.ideas || topicIdeas));
     }
   };
 
@@ -63,7 +69,7 @@ const TopicAmplifier = ({
             </button>
           </div>
           {isLoadingTopicIdeas && <div className="alert alert-info">Amplifying {topicKeyword}...</div>}
-          {topicIdeas.length > 0 && (
+          {Array.isArray(topicIdeas) && topicIdeas.length > 0 && (
             <ul className="menu bg-base-200 rounded-box">
               {topicIdeas.map((idea, i) => (
                 <li key={i}>
