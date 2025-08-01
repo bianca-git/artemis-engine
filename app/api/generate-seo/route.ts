@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const response = await openaiClient.responses.create({
       prompt: {
         id: "pmpt_688cc889a0808190802bdc23118cab6e0ee933fb76a4e8dd",
-        version: "2",
+        version: "3",
         variables: {
           title: topic?.TITLE || "",
           content: topic?.CONTENT || ""
