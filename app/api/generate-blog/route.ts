@@ -77,7 +77,7 @@ function convertToPortableText(htmlContent: string, title: string) {
           {
             _type: 'span',
             _key: `span-${index}`,
-            text: line.replace(/^#+\s*/, ''), // Remove markdown headers
+            text: line.replace(/^#+\s*|^[A-Z][^.]*:?\s*/, ''), // Remove markdown headers and other heading patterns
             marks: []
           }
         ]
