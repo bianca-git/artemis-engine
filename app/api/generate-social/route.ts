@@ -45,7 +45,7 @@ export async function POST(request: Request) {
           },
           { 
             role: 'user', 
-            content: `Create LinkedIn, Twitter, and Instagram posts for this blog content (keep Twitter under 280 chars):\n\n${blog.substring(0, 2000)}` // Limit input size
+            content: `Create LinkedIn, Twitter, and Instagram posts for this blog content (keep Twitter under 280 chars):\n\n${truncateAtBoundary(blog, 2000)}` // Limit input size at word/sentence boundary
           },
         ],
         max_tokens: 500,
