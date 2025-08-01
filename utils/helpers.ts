@@ -17,23 +17,64 @@ export const calculateReadTime = (text: string) => {
   return Math.ceil(wordCount / wordsPerMinute);
 };
 
-export const parseCsvData = (text: string) => {
-  if (!text) return [];
+// Memoization cache for CSV parsing
+const csvParseCache = new Map<string, Record<string, string>[]>();
+
+/**
+ * Optimized CSV parser with memoization and better performance
+ * Prevents re-parsing the same data and includes input sanitization
+ */
+export const parseCsvData = (text: string): Record<string, string>[] => {
+  if (!text?.trim()) return [];
+  
+  // Check cache first for performance
+  if (csvParseCache.has(text)) {
+    return csvParseCache.get(text)!;
+  }
+
   const lines = text.trim().split('\n');
   if (lines.length < 2) {
     return [];
   }
-  const headers = lines[0].split(',').map(h => h.trim());
-  const data = lines.slice(1).map(line => {
-    // Regex to handle basic CSV with quoted fields
-    const values = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
-    return headers.reduce((obj, header, i) => {
-      const rawValue = values[i] || '';
-      obj[header] = rawValue.startsWith('"') && rawValue.endsWith('"')
-        ? rawValue.slice(1, -1).replace(/""/g, '"')
-        : rawValue;
-      return obj;
-    }, {} as Record<string, string>);
-  });
-  return data;
+
+  try {
+    // Sanitize and parse headers
+    const headers = lines[0].split(',').map(h => h.trim().replace(/[<>]/g, ''));
+    
+    // Parse data rows with improved CSV handling
+    const data = lines.slice(1).map((line, lineIndex) => {
+      // Enhanced regex for better CSV parsing with quoted fields
+      const values = line.match(/("(?:[^"]|"")*"|[^",]*)/g) || [];
+      
+      return headers.reduce((obj, header, i) => {
+        const rawValue = values[i] || '';
+        
+        // Handle quoted values and sanitize for XSS prevention
+        let cleanValue = rawValue.startsWith('"') && rawValue.endsWith('"')
+          ? rawValue.slice(1, -1).replace(/""/g, '"')
+          : rawValue;
+        
+        // Basic XSS prevention - escape HTML tags
+        cleanValue = cleanValue.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        
+        obj[header] = cleanValue;
+        return obj;
+      }, {} as Record<string, string>);
+    });
+
+    // Cache the result
+    csvParseCache.set(text, data);
+    
+    return data;
+  } catch (error) {
+    console.error('CSV parsing error:', error);
+    return [];
+  }
+};
+
+/**
+ * Clear CSV parse cache when needed
+ */
+export const clearCsvCache = () => {
+  csvParseCache.clear();
 };

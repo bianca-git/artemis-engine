@@ -1,3 +1,11 @@
+import { useArtemisData } from "./useArtemisData";
+import { useArtemisWorkflow } from "./useArtemisWorkflow";
+import { useArtemisContent } from "./useArtemisContent";
+import { useArtemisUI } from "./useArtemisUI";
+import { useWorkflowReset } from "./useGenericReset";
+import { useState, useCallback, useMemo } from "react";
+import type { Topic, BlogContent, SeoData, VisualDescription, SocialPost } from "../types/artemis";
+
 function useArtemis() {
     // Modular hooks
     const data = useArtemisData();
@@ -19,18 +27,54 @@ function useArtemis() {
     const [imagePrompt, setImagePrompt] = useState("");
     const [imageScene, setImageScene] = useState("");
     const [bodyLanguage, setBodyLanguage] = useState("");
-    const [visualDescriptions, setVisualDescriptions] = useState<any[]>([]);
+    const [visualDescriptions, setVisualDescriptions] = useState<VisualDescription[]>([]);
     const [selectedVisuals, setSelectedVisuals] = useState<Set<number>>(new Set());
-    const [socialPosts, setSocialPosts] = useState<any>(null);
+    const [socialPosts, setSocialPosts] = useState<SocialPost[] | null>(null);
     const [cmsPayload, setCmsPayload] = useState<any>(null);
     const [sanityAssetRef, setSanityAssetRef] = useState("");
-    // ...existing code for other state
-    const [seoData, setSeoData] = useState<any>(null);
+    const [seoData, setSeoData] = useState<SeoData | null>(null);
     const [topicIdeas, setTopicIdeas] = useState<any[]>([]);
     const [topicKeyword, setTopicKeyword] = useState("");
 
+    // Reset values configuration
+    const resetValues = useMemo(() => ({
+        blogContent: "",
+        portableTextContent: [],
+        imagePrompt: "",
+        imageScene: "",
+        bodyLanguage: "",
+        visualDescriptions: [],
+        selectedVisuals: new Set(),
+        socialPosts: null,
+        cmsPayload: null,
+        sanityAssetRef: "",
+        seoData: null,
+    }), []);
+
+    // Reset setters configuration
+    const resetSetters = useMemo(() => ({
+        setBlogContent,
+        setPortableTextContent,
+        setImagePrompt,
+        setImageScene,
+        setBodyLanguage,
+        setVisualDescriptions,
+        setSelectedVisuals,
+        setSocialPosts,
+        setCmsPayload,
+        setSanityAssetRef,
+        setSeoData,
+    }), []);
+
+    // Use the optimized reset utility
+    const { resetBlog, resetSeo, resetVisual, resetSocial, resetCms } = useWorkflowReset(
+        resetValues,
+        resetSetters,
+        setWorkflowState
+    );
+
     // Reset generated content utility
-    const resetGeneratedContent = () => {
+    const resetGeneratedContent = useCallback(() => {
         setBlogContent("");
         setPortableTextContent([]);
         setImagePrompt("");
@@ -41,154 +85,131 @@ function useArtemis() {
         setSocialPosts(null);
         setCmsPayload(null);
         setSeoData(null);
-    };
-    // Reset Blog step and downstream
-    const resetBlog = () => {
-        setBlogContent("");
-        setPortableTextContent([]);
-        setWorkflowState(prev => ({ ...prev, blog: false, seo: false, visual: false, social: false, cms: false }));
-    };
-    // Reset SEO step and downstream
-    const resetSeo = () => {
-        setSeoData(null);
-        setWorkflowState(prev => ({ ...prev, seo: false, visual: false, social: false, cms: false }));
-    };
-    // Reset Visual step and downstream
-    const resetVisual = () => {
-        setImagePrompt("");
-        setImageScene("");
-        setBodyLanguage("");
-        setVisualDescriptions([]);
-        setSelectedVisuals(new Set());
-        setWorkflowState(prev => ({ ...prev, visual: false, social: false, cms: false }));
-    };
-    // Reset Social step and downstream
-    const resetSocial = () => {
-        setSocialPosts(null);
-        setWorkflowState(prev => ({ ...prev, social: false, cms: false }));
-    };
-    // Reset CMS step
-    const resetCms = () => {
-        setCmsPayload(null);
-        setSanityAssetRef("");
-        setWorkflowState(prev => ({ ...prev, cms: false }));
-    };
+    }, []);
 
     // Example: Generate SEO Data using modular content and UI hooks
-    const generateSeo = async (topic: any) => {
+    const generateSeo = useCallback(async (topic: Topic) => {
         ui.setIsLoadingSeo(true);
         try {
             const dataResult = await content.generateSeo(topic);
             setSeoData(dataResult);
-            setWorkflowState((prev: any) => ({ ...prev, seo: true }));
+            setWorkflowState((prev) => ({ ...prev, seo: true }));
         } catch (e) {
             setSeoData(null);
+            console.error('SEO generation error:', e);
         } finally {
             ui.setIsLoadingSeo(false);
         }
-    };
+    }, [content, ui]);
 
     // Example: Generate Blog Content
-    const generateBlog = async (topic: any) => {
+    const generateBlog = useCallback(async (topic: Topic) => {
         ui.setIsLoadingBlog(true);
         try {
-            const dataResult = await content.generateBlog(topic);
+            const dataResult = await content.generateBlog(topic) as BlogContent;
             setBlogContent(dataResult.content || "");
             setPortableTextContent(dataResult.portableText || []);
-            setWorkflowState((prev: any) => ({ ...prev, blog: true }));
+            setWorkflowState((prev) => ({ ...prev, blog: true }));
         } catch (e) {
             setBlogContent("");
             setPortableTextContent([]);
+            console.error('Blog generation error:', e);
         } finally {
             ui.setIsLoadingBlog(false);
         }
-    };
+    }, [content, ui]);
 
     // Example: Generate Visual
-    const generateVisual = async (prompt: string, scene: string, bodyLanguage: string) => {
+    const generateVisual = useCallback(async (prompt: string, scene: string, bodyLanguage: string) => {
         ui.setIsLoadingVisual(true);
         ui.setVisualLoadingMessage("Generating image descriptions...");
         try {
-            const dataResult = await content.generateVisual(prompt, scene, bodyLanguage);
+            const dataResult = await content.generateVisual(prompt, scene, bodyLanguage) as { descriptions: VisualDescription[] };
             setVisualDescriptions(dataResult.descriptions || []);
-            setWorkflowState((prev: any) => ({ ...prev, visual: true }));
+            setWorkflowState((prev) => ({ ...prev, visual: true }));
         } catch (e) {
             setVisualDescriptions([]);
+            console.error('Visual generation error:', e);
         } finally {
             ui.setIsLoadingVisual(false);
             ui.setVisualLoadingMessage("");
         }
-    };
+    }, [content, ui]);
 
     // Example: Generate Social Posts
-    const generateSocial = async (blog: string) => {
+    const generateSocial = useCallback(async (blog: string) => {
         ui.setIsLoadingSocial(true);
         try {
-            const dataResult = await content.generateSocial(blog);
+            const dataResult = await content.generateSocial(blog) as { posts: SocialPost[] };
             setSocialPosts(dataResult.posts || []);
-            setWorkflowState((prev: any) => ({ ...prev, social: true }));
+            setWorkflowState((prev) => ({ ...prev, social: true }));
         } catch (e) {
             setSocialPosts(null);
+            console.error('Social generation error:', e);
         } finally {
             ui.setIsLoadingSocial(false);
         }
-    };
+    }, [content, ui]);
 
     // Example: Publish to CMS
-    const publishToCms = async (payload: any, blogContent: string, seoData: any, socialPosts: any, visualDescriptions: any[], sanityAssetRef: string) => {
+    const publishToCms = useCallback(async (payload: any, blogContent: string, seoData: any, socialPosts: any, visualDescriptions: any[], sanityAssetRef: string) => {
         ui.setIsLoadingCms(true);
         try {
             const dataResult = await content.publishToCms(payload);
             setCmsPayload(dataResult);
-            setWorkflowState((prev: any) => ({ ...prev, cms: true }));
+            setWorkflowState((prev) => ({ ...prev, cms: true }));
         } catch (e) {
             setCmsPayload(null);
+            console.error('CMS publishing error:', e);
         } finally {
             ui.setIsLoadingCms(false);
         }
-    };
+    }, [content, ui]);
 
     // Example: Amplify Topic
-    const amplifyTopic = async (keyword: string) => {
+    const amplifyTopic = useCallback(async (keyword: string) => {
         ui.setIsLoadingTopicIdeas(true);
         try {
-            const dataResult = await content.amplifyTopic(keyword);
+            const dataResult = await content.amplifyTopic(keyword) as { ideas: any[] };
             setTopicIdeas(dataResult.ideas || []);
             return dataResult.ideas || [];
         } catch (e) {
             setTopicIdeas([]);
+            console.error('Topic amplification error:', e);
             return [];
         } finally {
             ui.setIsLoadingTopicIdeas(false);
         }
-    };
+    }, [content, ui]);
 
-    // Visual selection handler
-    const handleVisualSelection = (index: number) => {
+    // Visual selection handler with optimized Set operations
+    const handleVisualSelection = useCallback((index: number) => {
         setSelectedVisuals((prev) => {
             const newSet = new Set(prev);
-            if (newSet.has(index)) newSet.delete(index);
-            else newSet.add(index);
+            if (newSet.has(index)) {
+                newSet.delete(index);
+            } else {
+                newSet.add(index);
+            }
             return newSet;
         });
-    };
+    }, []);
     
     // Publish selected visuals to Google Sheets
-    const publishVisualsToSheet = async () => {
+    const publishVisualsToSheet = useCallback(async () => {
         ui.setIsLoadingVisual(true);
         try {
             const selected = visualDescriptions.filter((_, idx) => selectedVisuals.has(idx));
             await content.publishVisuals(selected);
-            setWorkflowState((prev: any) => ({ ...prev, visual: true }));
+            setWorkflowState((prev) => ({ ...prev, visual: true }));
         } catch (e) {
-            // handle error
+            console.error('Visual publishing error:', e);
         } finally {
             ui.setIsLoadingVisual(false);
         }
-    };
-    const addIdeaToCsv = data.addIdeaToCsv;
+    }, [visualDescriptions, selectedVisuals, content, ui]);
 
-    // Data loading and topic selection
+    const addIdeaToCsv = data.addIdeaToCsv;
     const handleLoadData = data.handleLoadData;
     const selectTopic = data.selectTopic;
 
@@ -238,9 +259,5 @@ function useArtemis() {
         resetCms
     };
 }
+
 export default useArtemis;
-import { useArtemisData } from "./useArtemisData";
-import { useArtemisWorkflow } from "./useArtemisWorkflow";
-import { useArtemisContent } from "./useArtemisContent";
-import { useArtemisUI } from "./useArtemisUI";
-import { useState } from "react";
