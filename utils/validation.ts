@@ -189,7 +189,7 @@ export function validateObject(
 /**
  * Validates keyword input specifically
  */
-export function validateKeyword(keyword: any): ValidationResult {
+export function validateKeyword(keyword: unknown): ValidationResult {
   return validateText(keyword, 'keyword', {
     required: true,
     minLength: 1,
