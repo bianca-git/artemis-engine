@@ -1,6 +1,3 @@
-
-
-
 function useArtemis() {
     // Modular hooks
     const data = useArtemisData();
