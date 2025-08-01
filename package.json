@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.13.1",
+  "packageManager": "pnpm@10.14.0",
   "scripts": {
     "rm:del": "rimraf node_modules .next next-env.d.ts pnpm-lock.yaml && pnpm install && pnpm dev",
     "dev": "next dev",
@@ -11,25 +11,27 @@
     "start": "next start"
   },
   "dependencies": {
+    "@portabletext/react": "^3.2.1",
+    "@portabletext/types": "^2.0.13",
     "@sanity/client": "^7.8.1",
     "@tailwindcss/postcss": "^4.1.11",
-    "daisyui": "^5.0.47",
-    "google-auth-library": "^10.1.0",
-    "googleapis": "^154.0.0",
-    "lucide-react": "^0.525.0",
-    "next": "15.4.4",
-    "openai": "^5.10.2",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "daisyui": "^5.0.50",
+    "google-auth-library": "^10.2.0",
+    "googleapis": "^154.1.0",
+    "lucide-react": "^0.535.0",
+    "next": "15.4.5",
+    "openai": "^5.11.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
     "tailwindcss": "^4.1.11"
   },
   "devDependencies": {
-    "@eslint/js": "^9.31.0",
+    "@eslint/js": "^9.32.0",
     "@portabletext/block-tools": "^2.0.0",
     "@types/node": "24.1.0",
-    "@types/react": "19.1.8",
+    "@types/react": "19.1.9",
     "jsdom": "^26.1.0",
     "rimraf": "latest",
-    "typescript": "5.8.3"
+    "typescript": "5.9.2"
   }
 }

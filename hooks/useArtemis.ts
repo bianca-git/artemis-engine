@@ -15,6 +15,7 @@ function useArtemis() {
         cms: false,
     });
     const [blogContent, setBlogContent] = useState("");
+    const [portableTextContent, setPortableTextContent] = useState<any[]>([]);
     const [imagePrompt, setImagePrompt] = useState("");
     const [imageScene, setImageScene] = useState("");
     const [bodyLanguage, setBodyLanguage] = useState("");
@@ -31,6 +32,7 @@ function useArtemis() {
     // Reset generated content utility
     const resetGeneratedContent = () => {
         setBlogContent("");
+        setPortableTextContent([]);
         setImagePrompt("");
         setImageScene("");
         setBodyLanguage("");
@@ -43,6 +45,7 @@ function useArtemis() {
     // Reset Blog step and downstream
     const resetBlog = () => {
         setBlogContent("");
+        setPortableTextContent([]);
         setWorkflowState(prev => ({ ...prev, blog: false, seo: false, visual: false, social: false, cms: false }));
     };
     // Reset SEO step and downstream
@@ -91,9 +94,11 @@ function useArtemis() {
         try {
             const dataResult = await content.generateBlog(topic);
             setBlogContent(dataResult.content || "");
+            setPortableTextContent(dataResult.portableText || []);
             setWorkflowState((prev: any) => ({ ...prev, blog: true }));
         } catch (e) {
             setBlogContent("");
+            setPortableTextContent([]);
         } finally {
             ui.setIsLoadingBlog(false);
         }
@@ -198,6 +203,7 @@ function useArtemis() {
         ...ui,
         // Local state
         blogContent, setBlogContent,
+        portableTextContent, setPortableTextContent,
         imagePrompt, setImagePrompt,
         imageScene, setImageScene,
         bodyLanguage, setBodyLanguage,
