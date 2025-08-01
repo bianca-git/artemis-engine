@@ -28,12 +28,15 @@ const SEOStep = ({
             )}
             {isLoadingSeo && <div className="alert alert-info">Generating SEO...</div>}
             {seoData && (
-              <div className="mockup-window bg-base-200 p-4 rounded-md border border-base-300">
-                <div className="mb-4 text-2xl font-bold text-center text-cyan-600">
-                  {seoData.metaDescription || seoData.description || "SEO Meta Description"}
+              <div className="mockup bg-base-200 p-4 rounded-md border border-base-300">
+                <h1 className="prose prose-h1 card-title text-3xl font-bold mb-2 bg-cyan-100 p-4">
+                  {seoData.metaTitle || "SEO Meta Title"}
+                </h1>
+                <div className="prose prose-p mb-4 text-lg px-4">
+                  {seoData.metaDescription || "SEO Meta Description"}
                 </div>
                 {seoData.keywords && Array.isArray(seoData.keywords) && seoData.keywords.length > 0 && (
-                  <div className="flex flex-wrap gap-2 justify-center mb-2">
+                  <div className="flex flex-wrap gap-2 mb-2">
                     {seoData.keywords.map((kw, idx) => (
                       <span key={idx} className="badge badge-outline badge-lg bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full font-semibold">
                         {kw}

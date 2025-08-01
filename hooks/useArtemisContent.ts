@@ -15,7 +15,14 @@ export function useArtemisContent() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ topic }),
         });
-        return response.json();
+        const data = await response.json();
+        // Ensure only metaTitle, metaDescription, and keywords are returned
+        return {
+            metaTitle: data.metaTitle || "",
+            metaDescription: data.metaDescription || "",
+            keywords: Array.isArray(data.keywords) ? data.keywords : [],
+            error: data.error // include error if present
+        };
     };
 
     const generateBlog = async (topic: any) => {

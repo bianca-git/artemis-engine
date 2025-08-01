@@ -1,56 +1,73 @@
 import { NextResponse } from 'next/server';
+import OpenAI from "openai";
 
+/**
+ * API route for generating SEO meta fields using OpenAI.
+ * Returns: { metaTitle, metaDescription, keywords[] }
+ */
 export async function POST(request: Request) {
   const { topic } = await request.json();
-  
-  // Skip API call during build
+
+  // Return mock data if no API key (for build/dev)
   if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({ 
-      content: {
-        metaDescription: `Mock SEO description for ${topic?.TITLE || 'topic'}`,
-        keywords: ["mock", "seo", "keywords"]
-      }
+    return NextResponse.json({
+      metaTitle: `Mock SEO title for ${topic?.TITLE || 'topic'}`,
+      metaDescription: `Mock SEO description for ${topic?.TITLE || 'topic'}`,
+      keywords: ["mock", "seo", "keywords", "example", "test"]
     });
   }
-  
-  // Call OpenAI GPT-4.1 nano for SEO meta and keywords
-  const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4.1-nano',
-      messages: [
-        { role: 'system', content: 'You are an SEO expert.' },
-        { role: 'system', content: 'Return content in the following format:\n\n{"content":{"metaDescription":"<Description in plain text>","keywords":["<Keyword one>","<Keyword two>"]}}' },
-        { role: 'user', content: `Generate SEO meta description and keywords for: ${topic?.TITLE}.\n\n${topic?.CONTENT}` },
-      ],
-      max_tokens: 1200,
-      temperature: 0.5,
-    }),
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
   });
-  const result = await openaiRes.json();
-  let metaDescription = '';
-  let keywords = [];
+
   try {
-    // OpenAI returns a JSON object as string, with "content" property
-    const content = result.choices?.[0]?.message?.content || '';
-    const outer = JSON.parse(content);
-    if (outer.content) {
-      metaDescription = outer.content.metaDescription || '';
-      keywords = Array.isArray(outer.content.keywords) ? outer.content.keywords : [];
-    } else {
-      metaDescription = outer.metaDescription || '';
-      keywords = Array.isArray(outer.keywords) ? outer.keywords : [];
+    const response = await openai.responses.create({
+      prompt: {
+        id: "pmpt_688cc889a0808190802bdc23118cab6e0ee933fb76a4e8dd",
+        version: "2",
+        variables: {
+          title: topic?.TITLE || "",
+          content: topic?.CONTENT || ""
+        }
+      }
+    });
+
+    // Find the first output item of type "message" and extract output_text
+    let outputText = "";
+    if (Array.isArray(response.output)) {
+      for (const item of response.output) {
+        // Some OpenAI SDKs use "content" array, but types may not reflect this.
+        // Safely check for content array and extract output_text.
+        const contentArr = (item as any)?.content;
+        if (Array.isArray(contentArr)) {
+          const textObj = contentArr.find((c: any) => c.type === "output_text" && typeof c.text === "string");
+          if (textObj) {
+            outputText = textObj.text;
+            break;
+          }
+        }
+      }
     }
+
+    let meta = {};
+    try {
+      meta = outputText ? JSON.parse(outputText) : {};
+    } catch {
+      meta = {
+        metaTitle: "",
+        metaDescription: "",
+        keywords: []
+      };
+    }
+
+    return NextResponse.json(meta);
   } catch (e) {
-    // fallback: try to extract manually
-    const content = result.choices?.[0]?.message?.content || '';
-    metaDescription = content.split('Keywords:')[0]?.trim() || '';
-    const keywordsRaw = content.split('Keywords:')[1] || '';
-    keywords = keywordsRaw.split(',').map(k => k.trim()).filter(Boolean);
+    return NextResponse.json({
+      metaTitle: "",
+      metaDescription: "",
+      keywords: [],
+      error: "Failed to generate SEO content"
+    }, { status: 500 });
   }
-  return NextResponse.json({ metaDescription, keywords });
 }

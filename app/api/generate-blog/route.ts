@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import OpenAI from "openai";
 
@@ -18,26 +17,30 @@ export async function POST(request: Request) {
     });
   }
   
-  // Call OpenAI with prompt to generate content that we'll structure as Portable Text
+  // Call OpenAI with prompt to generate content as Portable Text JSON (stringified)
   const response = await openai.responses.create({
     prompt: {
       id: "pmpt_688c4b3c1da88190bae98b455780bb1205afd50968eca7c0",
-      version: "1", 
+      version: "3", 
       variables: {
         title: topic?.TITLE || "",
         content: topic?.CONTENT || ""
       }
     }
   });
-  
-  const htmlContent = response?.output_text || "";
-  
-  // For now, let's create a simple Portable Text structure manually
-  // This is a minimal implementation that converts the generated content to Portable Text
-  const portableTextContent = convertToPortableText(htmlContent, topic?.TITLE || "");
+
+  // Parse the stringified Portable Text JSON array from output_text
+  let portableTextContent: any[] = [];
+  let rawContent = response?.output_text || "";
+  try {
+    portableTextContent = JSON.parse(rawContent);
+  } catch (err) {
+    // fallback: treat as plain text if parsing fails
+    portableTextContent = convertToPortableText(rawContent, topic?.TITLE || "");
+  }
   
   return NextResponse.json({ 
-    content: htmlContent, // Keep HTML for backward compatibility during transition
+    content: rawContent, // Keep for backward compatibility
     portableText: portableTextContent
   });
 }
