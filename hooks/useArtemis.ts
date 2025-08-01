@@ -88,11 +88,28 @@ function useArtemis() {
         }
     };
 
-    // Example: Generate Blog Content
+    // Example: Generate Blog Content with streaming
     const generateBlog = async (topic: any) => {
         ui.setIsLoadingBlog(true);
+        setBlogContent(""); // Clear previous content
+        setPortableTextContent([]);
+        
         try {
-            const dataResult = await content.generateBlog(topic);
+            const dataResult = await content.generateBlog(
+                topic,
+                // onChunk callback - append each chunk to the content
+                (chunk: string) => {
+                    setBlogContent(prev => prev + chunk);
+                },
+                // onComplete callback - set final portable text
+                (data: any) => {
+                    if (data.portableText) {
+                        setPortableTextContent(data.portableText);
+                    }
+                }
+            );
+            
+            // Ensure we have the final content and portable text
             setBlogContent(dataResult.content || "");
             setPortableTextContent(dataResult.portableText || []);
             setWorkflowState((prev: any) => ({ ...prev, blog: true }));

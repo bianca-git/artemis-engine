@@ -9,36 +9,104 @@ const openai = new OpenAI({
 export async function POST(request: Request) {
   const { topic } = await request.json();
   
-  // Skip API call during build
+  // Skip API call during build - return mock streaming response
   if (!process.env.OPENAI_API_KEY) {
     const mockContent = `This is a mock blog post about ${topic?.TITLE || 'a topic'}. ${topic?.CONTENT || 'Content will be generated here.'}`;
-    return NextResponse.json({ 
-      content: mockContent,
-      portableText: convertToPortableText(mockContent, topic?.TITLE || "Sample Title")
+    
+    // Create a streaming response for mock data
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        // Simulate streaming by sending chunks
+        const words = mockContent.split(' ');
+        for (let i = 0; i < words.length; i += 3) {
+          const chunk = words.slice(i, i + 3).join(' ') + ' ';
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: chunk, isComplete: false })}\n\n`));
+          await new Promise(resolve => setTimeout(resolve, 100)); // Simulate delay
+        }
+        
+        // Send completion event with portable text
+        const portableText = convertToPortableText(mockContent, topic?.TITLE || "Sample Title");
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+          content: '', 
+          isComplete: true, 
+          portableText,
+          fullContent: mockContent 
+        })}\n\n`));
+        controller.close();
+      }
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
     });
   }
   
-  // Call OpenAI with prompt to generate content that we'll structure as Portable Text
-  const response = await openai.responses.create({
-    prompt: {
-      id: "pmpt_688c4b3c1da88190bae98b455780bb1205afd50968eca7c0",
-      version: "1", 
-      variables: {
-        title: topic?.TITLE || "",
-        content: topic?.CONTENT || ""
+  // Create streaming response for OpenAI
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        // Call OpenAI with streaming enabled
+        const response = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          messages: [
+            {
+              role: "system",
+              content: "You are a professional blog writer. Write a comprehensive, engaging blog post based on the provided topic and content."
+            },
+            {
+              role: "user",
+              content: `Title: ${topic?.TITLE || ""}\nContent: ${topic?.CONTENT || ""}\n\nPlease write a detailed blog post about this topic.`
+            }
+          ],
+          stream: true,
+          max_tokens: 2000,
+          temperature: 0.7,
+        });
+
+        let fullContent = '';
+        
+        for await (const chunk of response) {
+          const content = chunk.choices[0]?.delta?.content || '';
+          if (content) {
+            fullContent += content;
+            // Send each chunk as it arrives
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content, isComplete: false })}\n\n`));
+          }
+        }
+        
+        // Send completion event with portable text
+        const portableText = convertToPortableText(fullContent, topic?.TITLE || "");
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+          content: '', 
+          isComplete: true, 
+          portableText,
+          fullContent 
+        })}\n\n`));
+        
+      } catch (error) {
+        console.error('Streaming error:', error);
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+          error: 'Failed to generate content', 
+          isComplete: true 
+        })}\n\n`));
+      } finally {
+        controller.close();
       }
     }
   });
-  
-  const htmlContent = response?.output_text || "";
-  
-  // For now, let's create a simple Portable Text structure manually
-  // This is a minimal implementation that converts the generated content to Portable Text
-  const portableTextContent = convertToPortableText(htmlContent, topic?.TITLE || "");
-  
-  return NextResponse.json({ 
-    content: htmlContent, // Keep HTML for backward compatibility during transition
-    portableText: portableTextContent
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
   });
 }
 

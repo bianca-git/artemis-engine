@@ -18,13 +18,62 @@ export function useArtemisContent() {
         return response.json();
     };
 
-    const generateBlog = async (topic: any) => {
+    const generateBlog = async (topic: any, onChunk?: (chunk: string) => void, onComplete?: (data: any) => void) => {
         const response = await fetch("/api/generate-blog", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ topic }),
         });
-        return response.json();
+
+        if (!response.body) {
+            throw new Error('No response body');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = '';
+
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            
+                            if (data.error) {
+                                throw new Error(data.error);
+                            }
+                            
+                            if (data.isComplete) {
+                                onComplete?.(data);
+                                return {
+                                    content: data.fullContent || fullContent,
+                                    portableText: data.portableText || []
+                                };
+                            } else {
+                                fullContent += data.content;
+                                onChunk?.(data.content);
+                            }
+                        } catch (e) {
+                            // Skip invalid JSON lines
+                        }
+                    }
+                }
+            }
+        } finally {
+            reader.releaseLock();
+        }
+
+        return {
+            content: fullContent,
+            portableText: []
+        };
     };
 
     const generateVisual = async (prompt: string, scene: string, bodyLanguage: string) => {
