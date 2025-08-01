@@ -1,28 +1,36 @@
 import { NextResponse } from 'next/server';
+import { hasValidOpenAIKey } from '../../../utils/openaiClient';
 
+/**
+ * Optimized visual generation API with input validation and consistent error handling
+ */
 export async function POST(request: Request) {
   const { prompt, scene, bodyLanguage } = await request.json();
-  let error = null;
-  let apiError = null;
-  let imageDescriptions = null;
+  
+  // Input validation
+  if (!prompt?.trim() || !scene?.trim() || !bodyLanguage?.trim()) {
+    return NextResponse.json({
+      success: false,
+      error: 'Missing required parameters: prompt, scene, and bodyLanguage are required'
+    }, { status: 400 });
+  }
+
+  // Return mock data if no API key
+  if (!hasValidOpenAIKey()) {
+    return NextResponse.json({
+      descriptions: [
+        {
+          "Image Name": "Mock Visual 1",
+          "Caption Plan": "Mock caption for visual content",
+          "Target Audience": "General audience",
+          "Keywords": ["mock", "visual", "content"],
+          "Platform": "Instagram"
+        }
+      ]
+    });
+  }
 
   try {
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    if (!OPENAI_API_KEY) {
-      // Return mock data during build
-      return NextResponse.json({
-        descriptions: [
-          {
-            "Image Name": "Mock Visual 1",
-            "Caption Plan": "Mock caption for visual content",
-            "Target Audience": "General audience",
-            "Keywords": ["mock", "visual", "content"],
-            "Platform": "Instagram"
-          }
-        ]
-      });
-    }
-
     const openaiPayload = {
       model: "gpt-4-turbo",
       response_format: { type: "json_object" },
@@ -45,31 +53,40 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify(openaiPayload),
     });
 
     if (!openaiRes.ok) {
-      apiError = await openaiRes.text();
+      const apiError = await openaiRes.text();
       throw new Error(`OpenAI image description generation failed: ${openaiRes.status} ${openaiRes.statusText} - ${apiError}`);
     }
 
     const openaiResult = await openaiRes.json();
     const imageDescriptionsText = openaiResult.choices[0].message.content;
     const imageDescriptionsData = JSON.parse(imageDescriptionsText);
-    imageDescriptions = imageDescriptionsData.image_descriptions;
+    const imageDescriptions = imageDescriptionsData.image_descriptions;
 
     if (!Array.isArray(imageDescriptions) || imageDescriptions.length === 0) {
       throw new Error('No image descriptions returned from OpenAI');
     }
 
-  } catch (err: any) {
-    error = err?.message || String(err);
-    // eslint-disable-next-line no-console
-    console.error('Image description generation error:', error);
-    if (apiError) console.error('OpenAI error details:', apiError);
-  }
+    return NextResponse.json({ 
+      success: true, 
+      descriptions: imageDescriptions, 
+      prompt 
+    });
 
-  return NextResponse.json({ success: !error, descriptions: imageDescriptions, prompt, error, apiError });
+  } catch (err: any) {
+    const error = err?.message || String(err);
+    console.error('Image description generation error:', error);
+    
+    return NextResponse.json({ 
+      success: false, 
+      descriptions: null, 
+      prompt, 
+      error 
+    }, { status: 500 });
+  }
 }

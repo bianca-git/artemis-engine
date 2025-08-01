@@ -1,9 +1,13 @@
-import React, { useRef } from "react";
+import React, { useMemo } from "react";
 import TopicAmplifier from "./TopicAmplifier";
 import LoadDataSection from "./LoadDataSection";
 import SelectTopicSection from "./SelectTopicSection";
 
-const TopicWorkflowSection = ({
+/**
+ * Optimized TopicWorkflowSection with React performance optimizations
+ * Memoizes component sections to prevent unnecessary re-renders
+ */
+const TopicWorkflowSection = React.memo(({
   topicKeyword,
   setTopicKeyword,
   topicIdeas,
@@ -21,38 +25,48 @@ const TopicWorkflowSection = ({
   setWorkflowState,
   handleLoadData,
   csvRefreshTimeout,
-}) => {
-  // Example: you can add any cross-section logic here if needed
+}: any) => {
+  // Memoize TopicAmplifier props to prevent unnecessary re-renders
+  const topicAmplifierProps = useMemo(() => ({
+    topicKeyword,
+    setTopicKeyword,
+    topicIdeas,
+    amplifyTopic,
+    isLoadingTopicIdeas,
+    addIdeaToCsv,
+    setCsvText,
+  }), [topicKeyword, setTopicKeyword, topicIdeas, amplifyTopic, isLoadingTopicIdeas, addIdeaToCsv, setCsvText]);
+
+  // Memoize LoadDataSection props
+  const loadDataSectionProps = useMemo(() => ({
+    csvText,
+    setCsvText,
+    csvData,
+    setCsvData,
+    selectTopic,
+    setWorkflowState,
+    handleLoadData,
+    csvRefreshTimeout,
+  }), [csvText, setCsvText, csvData, setCsvData, selectTopic, setWorkflowState, handleLoadData, csvRefreshTimeout]);
+
+  // Memoize SelectTopicSection props
+  const selectTopicSectionProps = useMemo(() => ({
+    csvData,
+    activeTopic,
+    selectTopic,
+    workflowState,
+    setWorkflowState,
+  }), [csvData, activeTopic, selectTopic, workflowState, setWorkflowState]);
+
   return (
     <div className="space-y-8">
-      <TopicAmplifier
-        topicKeyword={topicKeyword}
-        setTopicKeyword={setTopicKeyword}
-        topicIdeas={topicIdeas}
-        amplifyTopic={amplifyTopic}
-        isLoadingTopicIdeas={isLoadingTopicIdeas}
-        addIdeaToCsv={addIdeaToCsv}
-        setCsvText={setCsvText}
-      />
-      <LoadDataSection
-        csvText={csvText}
-        setCsvText={setCsvText}
-        csvData={csvData}
-        setCsvData={setCsvData}
-        selectTopic={selectTopic}
-        setWorkflowState={setWorkflowState}
-        handleLoadData={handleLoadData}
-        csvRefreshTimeout={csvRefreshTimeout}
-      />
-      <SelectTopicSection
-        csvData={csvData}
-        activeTopic={activeTopic}
-        selectTopic={selectTopic}
-        workflowState={workflowState}
-        setWorkflowState={setWorkflowState}
-      />
+      <TopicAmplifier {...topicAmplifierProps} />
+      <LoadDataSection {...loadDataSectionProps} />
+      <SelectTopicSection {...selectTopicSectionProps} />
     </div>
   );
-};
+});
+
+TopicWorkflowSection.displayName = 'TopicWorkflowSection';
 
 export default TopicWorkflowSection;
