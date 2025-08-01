@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@portabletext/react':
+        specifier: ^3.2.1
+        version: 3.2.1(react@19.1.0)
+      '@portabletext/types':
+        specifier: ^2.0.13
+        version: 2.0.13
       '@sanity/client':
         specifier: ^7.8.1
         version: 7.8.1
@@ -319,6 +325,20 @@ packages:
     peerDependencies:
       '@sanity/types': ^4.0.1
       '@types/react': ^18.3 || ^19
+
+  '@portabletext/react@3.2.1':
+    resolution: {integrity: sha512-RyFLk6u2q6ZyABTdOk+xoNR2Tq/4fcQFEWayNk4Kbd3gHpUUTabqOrDMChcmG6C7YVLSpwIEBwHoBVcy4vK/hA==}
+    engines: {node: ^14.13.1 || >=16.0.0}
+    peerDependencies:
+      react: ^17 || ^18 || >=19.0.0-0
+
+  '@portabletext/toolkit@2.0.17':
+    resolution: {integrity: sha512-5wj+oUaCmHm9Ay1cytPmT1Yc0SrR1twwUIc0qNQ3MtaXaNMPw99Gjt1NcA34yfyKmEf/TAB2NiiT72jFxdddIQ==}
+    engines: {node: ^14.13.1 || >=16.0.0}
+
+  '@portabletext/types@2.0.13':
+    resolution: {integrity: sha512-5xk5MSyQU9CrDho3Rsguj38jhijhD36Mk8S6mZo3huv6PM+t4M/5kJN2KFIxgvt4ONpvOEs1pVIZAV0cL0Vi+Q==}
+    engines: {node: ^14.13.1 || >=16.0.0 || >=18.0.0}
 
   '@sanity/client@7.8.1':
     resolution: {integrity: sha512-jz/IizNHGrss7BG+wFzhI2l2f2avayM4dsBcxKRW4T3HSP4MP7T3oA6vgSDRX1N6KfQfFVILNq6bBE0ut8cHUA==}
@@ -1373,6 +1393,18 @@ snapshots:
       '@types/react': 19.1.8
       get-random-values-esm: 1.0.2
       lodash: 4.17.21
+
+  '@portabletext/react@3.2.1(react@19.1.0)':
+    dependencies:
+      '@portabletext/toolkit': 2.0.17
+      '@portabletext/types': 2.0.13
+      react: 19.1.0
+
+  '@portabletext/toolkit@2.0.17':
+    dependencies:
+      '@portabletext/types': 2.0.13
+
+  '@portabletext/types@2.0.13': {}
 
   '@sanity/client@7.8.1':
     dependencies:
