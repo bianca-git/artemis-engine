@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import OpenAI from "openai";
+import { openaiClient, hasValidOpenAIKey } from '../../../utils/openaiClient';
 
 /**
  * API route for generating SEO meta fields using OpenAI.
@@ -9,20 +9,18 @@ export async function POST(request: Request) {
   const { topic } = await request.json();
 
   // Return mock data if no API key (for build/dev)
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({
-      metaTitle: `Mock SEO title for ${topic?.TITLE || 'topic'}`,
-      metaDescription: `Mock SEO description for ${topic?.TITLE || 'topic'}`,
-      keywords: ["mock", "seo", "keywords", "example", "test"]
-    });
+  const mockResponse = {
+    metaTitle: `Mock SEO title for ${topic?.TITLE || 'topic'}`,
+    metaDescription: `Mock SEO description for ${topic?.TITLE || 'topic'}`,
+    keywords: ["mock", "seo", "keywords", "example", "test"]
+  };
+
+  if (!hasValidOpenAIKey()) {
+    return NextResponse.json(mockResponse);
   }
 
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-
   try {
-    const response = await openai.responses.create({
+    const response = await openaiClient.responses.create({
       prompt: {
         id: "pmpt_688cc889a0808190802bdc23118cab6e0ee933fb76a4e8dd",
         version: "2",
@@ -63,6 +61,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(meta);
   } catch (e) {
+    console.error('SEO generation error:', e);
     return NextResponse.json({
       metaTitle: "",
       metaDescription: "",

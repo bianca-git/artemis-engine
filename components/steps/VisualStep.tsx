@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import StepCard from "../StepCard";
-import { publishVisualToSheets } from "../../utils/api";
+import { apiClient } from "../../utils/apiClient";
 
+/**
+ * Optimized Visual generation component using centralized API client
+ */
 const VisualStep = ({
   workflowState,
   visualDescriptions,
@@ -13,6 +16,19 @@ const VisualStep = ({
   // Free text fields for additional prompt context
   const [imageScene, setImageScene] = useState("");
   const [bodyLanguage, setBodyLanguage] = useState("");
+
+  const publishVisualToSheets = async (visualDescriptions: any[]) => {
+    try {
+      const response = await apiClient.post("/publish-visual-sheets", { visualDescriptions });
+      if (response.success) {
+        alert("Visual descriptions sent to Google Sheets!");
+      } else {
+        throw new Error(response.error || "Failed to publish visuals to Google Sheets");
+      }
+    } catch (err: any) {
+      alert("Error sending to Google Sheets: " + err.message);
+    }
+  };
 
   return (
     <section>

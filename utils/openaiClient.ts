@@ -40,6 +40,7 @@ export async function makeOpenAIRequest<T>(
     return await requestFn(openaiClient);
   } catch (error) {
     console.error('OpenAI API error:', error);
-    throw error;
+    // Return mock response on error instead of throwing
+    return mockResponse;
   }
 }

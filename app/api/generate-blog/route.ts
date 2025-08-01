@@ -1,48 +1,51 @@
 import { NextResponse } from 'next/server';
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "dummy-key-for-build",
-});
+import { openaiClient, hasValidOpenAIKey } from '../../../utils/openaiClient';
 
 export async function POST(request: Request) {
   const { topic } = await request.json();
   
-  // Skip API call during build
-  if (!process.env.OPENAI_API_KEY) {
-    const mockContent = `This is a mock blog post about ${topic?.TITLE || 'a topic'}. ${topic?.CONTENT || 'Content will be generated here.'}`;
-    return NextResponse.json({ 
-      content: mockContent,
-      portableText: convertToPortableText(mockContent, topic?.TITLE || "Sample Title")
-    });
-  }
-  
-  // Call OpenAI with prompt to generate content as Portable Text JSON (stringified)
-  const response = await openai.responses.create({
-    prompt: {
-      id: "pmpt_688c4b3c1da88190bae98b455780bb1205afd50968eca7c0",
-      version: "3", 
-      variables: {
-        title: topic?.TITLE || "",
-        content: topic?.CONTENT || ""
-      }
-    }
-  });
+  // Return mock data if no API key (for build/dev)
+  const mockContent = `This is a mock blog post about ${topic?.TITLE || 'a topic'}. ${topic?.CONTENT || 'Content will be generated here.'}`;
+  const mockResponse = { 
+    content: mockContent,
+    portableText: convertToPortableText(mockContent, topic?.TITLE || "Sample Title")
+  };
 
-  // Parse the stringified Portable Text JSON array from output_text
-  let portableTextContent: any[] = [];
-  let rawContent = response?.output_text || "";
-  try {
-    portableTextContent = JSON.parse(rawContent);
-  } catch (err) {
-    // fallback: treat as plain text if parsing fails
-    portableTextContent = convertToPortableText(rawContent, topic?.TITLE || "");
+  if (!hasValidOpenAIKey()) {
+    return NextResponse.json(mockResponse);
   }
   
-  return NextResponse.json({ 
-    content: rawContent, // Keep for backward compatibility
-    portableText: portableTextContent
-  });
+  try {
+    // Call OpenAI with prompt to generate content as Portable Text JSON (stringified)
+    const response = await openaiClient.responses.create({
+      prompt: {
+        id: "pmpt_688c4b3c1da88190bae98b455780bb1205afd50968eca7c0",
+        version: "3", 
+        variables: {
+          title: topic?.TITLE || "",
+          content: topic?.CONTENT || ""
+        }
+      }
+    });
+
+    // Parse the stringified Portable Text JSON array from output_text
+    let portableTextContent: any[] = [];
+    let rawContent = response?.output_text || "";
+    try {
+      portableTextContent = JSON.parse(rawContent);
+    } catch (err) {
+      // fallback: treat as plain text if parsing fails
+      portableTextContent = convertToPortableText(rawContent, topic?.TITLE || "");
+    }
+    
+    return NextResponse.json({ 
+      content: rawContent, // Keep for backward compatibility
+      portableText: portableTextContent
+    });
+  } catch (error) {
+    console.error('Blog generation error:', error);
+    return NextResponse.json(mockResponse);
+  }
 }
 
 function convertToPortableText(htmlContent: string, title: string) {
