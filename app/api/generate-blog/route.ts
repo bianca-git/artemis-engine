@@ -43,8 +43,13 @@ export async function POST(request: Request) {
 }
 
 function convertToPortableText(htmlContent: string, title: string) {
-  // Simple conversion - split content into paragraphs and create basic Portable Text structure
-  const lines = htmlContent.split('\n').filter(line => line.trim());
+  // Simple conversion - split and filter content into paragraphs in a single step
+  const lines = [];
+  for (const line of htmlContent.split('\n')) {
+    if (line.trim()) {
+      lines.push(line);
+    }
+  }
   
   const blocks = [
     // Title block
