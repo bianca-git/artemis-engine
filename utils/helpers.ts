@@ -80,6 +80,11 @@ export const clearCsvCache = () => {
 };
 
 /**
+ * Minimum boundary ratio for truncation - only use boundary if it's at least this ratio of maxLength
+ */
+const MIN_BOUNDARY_RATIO = 0.5;
+
+/**
  * Truncate text at word/sentence boundary to avoid cutting off mid-word
  */
 export const truncateAtBoundary = (text: string, maxLength: number): string => {
