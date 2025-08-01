@@ -28,7 +28,7 @@ function useArtemis() {
     const [imageScene, setImageScene] = useState("");
     const [bodyLanguage, setBodyLanguage] = useState("");
     const [visualDescriptions, setVisualDescriptions] = useState<VisualDescription[]>([]);
-    const [selectedVisuals, setSelectedVisuals] = useState<Set<number>>(new Set());
+    const [selectedVisuals, setSelectedVisuals] = useState<Map<number, boolean>>(new Map());
     const [socialPosts, setSocialPosts] = useState<SocialPost[] | null>(null);
     const [cmsPayload, setCmsPayload] = useState<any>(null);
     const [sanityAssetRef, setSanityAssetRef] = useState("");
@@ -44,7 +44,7 @@ function useArtemis() {
         imageScene: "",
         bodyLanguage: "",
         visualDescriptions: [],
-        selectedVisuals: new Set(),
+        selectedVisuals: new Map(),
         socialPosts: null,
         cmsPayload: null,
         sanityAssetRef: "",
@@ -81,7 +81,7 @@ function useArtemis() {
         setImageScene("");
         setBodyLanguage("");
         setVisualDescriptions([]);
-        setSelectedVisuals(new Set());
+        setSelectedVisuals(new Map());
         setSocialPosts(null);
         setCmsPayload(null);
         setSeoData(null);
@@ -182,16 +182,16 @@ function useArtemis() {
         }
     }, [content, ui]);
 
-    // Visual selection handler with optimized Set operations
+    // Visual selection handler with optimized Map operations for O(1) lookups
     const handleVisualSelection = useCallback((index: number) => {
         setSelectedVisuals((prev) => {
-            const newSet = new Set(prev);
-            if (newSet.has(index)) {
-                newSet.delete(index);
+            const newMap = new Map(prev);
+            if (newMap.has(index)) {
+                newMap.delete(index);
             } else {
-                newSet.add(index);
+                newMap.set(index, true);
             }
-            return newSet;
+            return newMap;
         });
     }, []);
     

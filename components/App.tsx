@@ -1,14 +1,38 @@
 // components/App.tsx
 "use client";
-import React, { useRef } from "react";
+import React, { useRef, useMemo } from "react";
 import useArtemis from "../hooks/useArtemis";
 import ThemeSwitcher from "./ThemeSwitcher";
 import TopicWorkflowSection from "./TopicWorkflowSection";
 import GenerationSteps from "./GenerationSteps";
 
+/**
+ * Optimized main App component with memoized props
+ */
 const App = () => {
   const csvRefreshTimeout = useRef(null);
   const artemis = useArtemis();
+
+  // Memoize TopicWorkflowSection props to prevent unnecessary re-renders
+  const topicWorkflowProps = useMemo(() => ({
+    topicKeyword: artemis.topicKeyword,
+    setTopicKeyword: artemis.setTopicKeyword,
+    topicIdeas: artemis.topicIdeas,
+    setTopicIdeas: artemis.setTopicIdeas,
+    amplifyTopic: artemis.amplifyTopic,
+    isLoadingTopicIdeas: artemis.isLoadingTopicIdeas,
+    addIdeaToCsv: artemis.addIdeaToCsv,
+    csvText: artemis.csvText,
+    setCsvText: artemis.setCsvText,
+    csvData: artemis.csvData,
+    setCsvData: artemis.setCsvData,
+    selectTopic: artemis.selectTopic,
+    activeTopic: artemis.activeTopic,
+    workflowState: artemis.workflowState,
+    setWorkflowState: artemis.setWorkflowState,
+    handleLoadData: artemis.handleLoadData,
+    csvRefreshTimeout,
+  }), [artemis, csvRefreshTimeout]);
 
   return (
     <div className="min-h-screen bg-base-200 text-base-content">
@@ -26,7 +50,7 @@ const App = () => {
       </div>
       <main className="p-4 grid grid-cols-1 lg:grid-cols-3 gap-8 min-w-7xl max-w-7xl mx-auto">
         <div className="lg:col-span-1">
-          <TopicWorkflowSection {...artemis} csvRefreshTimeout={csvRefreshTimeout} />
+          <TopicWorkflowSection {...topicWorkflowProps} />
         </div>
         <div className="lg:col-span-2 space-y-8">
           <GenerationSteps {...artemis} />
@@ -37,5 +61,3 @@ const App = () => {
 };
 
 export default App;
-
-
