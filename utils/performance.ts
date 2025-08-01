@@ -32,7 +32,7 @@ export class PerformanceMonitor {
         this.measurements.get(name)!.push(duration);
         
         // Log slow operations
-        if (duration > 100) {
+        if (duration > PerformanceMonitor.SLOW_OPERATION_THRESHOLD_MS) {
           console.warn(`Slow operation detected: ${name} took ${duration.toFixed(2)}ms`);
         }
         
