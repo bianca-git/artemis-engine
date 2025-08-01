@@ -44,7 +44,7 @@ function useArtemis() {
         imageScene: "",
         bodyLanguage: "",
         visualDescriptions: [],
-        selectedVisuals: new Map(),
+        selectedVisuals: new Set(),
         socialPosts: null,
         cmsPayload: null,
         sanityAssetRef: "",
@@ -81,7 +81,7 @@ function useArtemis() {
         setImageScene("");
         setBodyLanguage("");
         setVisualDescriptions([]);
-        setSelectedVisuals(new Map());
+        setSelectedVisuals(new Set());
         setSocialPosts(null);
         setCmsPayload(null);
         setSeoData(null);
@@ -182,16 +182,16 @@ function useArtemis() {
         }
     }, [content, ui]);
 
-    // Visual selection handler with optimized Map operations for O(1) lookups
+    // Visual selection handler with optimized Set operations for O(1) lookups
     const handleVisualSelection = useCallback((index: number) => {
         setSelectedVisuals((prev) => {
-            const newMap = new Map(prev);
-            if (newMap.has(index)) {
-                newMap.delete(index);
+            const newSet = new Set(prev);
+            if (newSet.has(index)) {
+                newSet.delete(index);
             } else {
-                newMap.set(index, true);
+                newSet.add(index);
             }
-            return newMap;
+            return newSet;
         });
     }, []);
     

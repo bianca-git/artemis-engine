@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { hasValidOpenAIKey } from '../../../utils/openaiClient';
+import { truncateAtBoundary } from '../../../utils/helpers';
 
 /**
  * Optimized social media post generation API with input validation

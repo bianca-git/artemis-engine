@@ -1,71 +1,192 @@
-# ARTEMIS UI Review and Project Overview
+# Artemis Engine
 
-This document provides a review of the ARTEMIS application's UI, an overview of the project structure, and suggestions for improvement.
+**A.R.T.E.M.I.S** - Automated Real-Time Engagement & Marketing Intelligence System
 
-## Project Structure
+A Next.js application for automated content generation and marketing intelligence. Artemis Engine orchestrates a step-based workflow for generating, optimizing, and publishing marketing content across multiple platforms.
 
-The application is a Next.js project with the following structure:
+## ✨ Features
 
--   **/app**: Contains the main application pages and API routes.
-    -   **/api**: API routes for various functionalities like generating content, publishing, etc.
-    -   `layout.tsx`: The main layout of the application.
-    -   `page.tsx`: The main page of the application.
-    -   `globals.css`: Global CSS file, including Tailwind CSS and DaisyUI setup.
--   **/components**: Contains the React components used in the application.
-    -   `App.tsx`: The main application component that orchestrates the UI.
-    -   `StepCard.tsx`: A component to display each step of the ARTEMIS workflow.
-    -   `ThemeSwitcher.js`: A component to switch between different color themes.
--   **/hooks**: Contains custom React hooks for managing application state and logic.
--   **/utils**: Contains utility functions.
--   `next.config.js`: Next.js configuration file.
--   `package.json`: Project dependencies and scripts.
--   `tailwind.config.js`: Tailwind CSS configuration file.
+- **🧠 Topic Amplification** - AI-powered topic ideation and keyword expansion
+- **📊 Data Management** - CSV-based topic loading and management
+- **📝 Content Generation** - Automated blog post creation with Portable Text
+- **🔍 SEO Optimization** - Meta titles, descriptions, and keyword generation
+- **📱 Social Media** - Platform-specific posts for LinkedIn, Twitter, and Instagram
+- **🎨 Visual Descriptions** - AI-generated visual content descriptions
+- **🚀 CMS Publishing** - Direct integration with Sanity CMS
+- **📈 Google Sheets** - Visual asset publishing to spreadsheets
 
-## UI Framework and Styling
+## 🛠 Tech Stack
 
-The application is built with the following technologies:
+- **Framework**: Next.js 15.4.5 with App Router
+- **Language**: TypeScript
+- **UI**: React 19.1.1 (Function components + hooks)
+- **Styling**: Tailwind CSS 4.1.11 + DaisyUI 5.0.50
+- **Icons**: Lucide React
+- **AI**: OpenAI API integration
+- **CMS**: Sanity integration
+- **Sheets**: Google Sheets API
 
--   **Next.js**: A React framework for building server-side rendered and static web applications.
--   **Tailwind CSS**: A utility-first CSS framework for rapid UI development.
--   **DaisyUI**: A plugin for Tailwind CSS that provides a set of pre-built UI components.
+## 🚀 Getting Started
 
-## Application Functionality
+### Prerequisites
 
-ARTEMIS (Automated Real-Time Engagement & Marketing Intelligence System) is a marketing tool that automates the process of creating and publishing content. The workflow is as follows:
+- Node.js 18+ 
+- npm or pnpm package manager
 
-1.  **Load Data**: Users can load data from a CSV file, which contains topics for content creation.
-2.  **Select Topic**: Users can select a topic from the loaded data to work on.
-3.  **Generate Blog Post**: The application generates a blog post based on the selected topic.
-4.  **Generate SEO Data**: The application generates SEO-optimized data for the blog post.
-5.  **Generate Social Media Posts**: The application generates social media posts to promote the blog post.
-6.  **Generate Visuals**: The application generates visuals to accompany the content.
-7.  **Publish to CMS**: The application publishes the content to a CMS.
+### Installation
 
-## UI/UX Improvement Suggestions
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/bianca-git/artemis-engine.git
+   cd artemis-engine
+   ```
 
-The current UI is functional but could be improved in several areas to enhance the user experience and create a more polished look.
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   pnpm install
+   ```
 
-### 1. Component Styling and Consistency
+3. **Set up environment variables**
+   ```bash
+   cp .env.template .env.local
+   ```
+   
+   Configure the following variables in `.env.local`:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key
+   SANITY_PROJECT_ID=your_sanity_project_id
+   SANITY_DATASET=your_sanity_dataset
+   SANITY_API_TOKEN=your_sanity_token
+   SANITY_API_VERSION=2023-05-03
+   GOOGLE_SHEETS_CLIENT_EMAIL=your_service_account_email
+   GOOGLE_SHEETS_PRIVATE_KEY=your_private_key
+   GOOGLE_SHEETS_SPREADSHEET_ID=your_spreadsheet_id
+   ```
 
--   **`StepCard.tsx`**: This component is currently very basic and doesn't use DaisyUI classes. It should be styled to match the rest of the application. For example, it could be turned into a DaisyUI `card` component with a title and a body. The "Reset" button should also be styled as a DaisyUI `btn`.
--   **`ThemeSwitcher.js`**: The theme switcher is a plain HTML `<select>` element. It should be styled to match the application's theme. A DaisyUI `select` component would be a good choice.
+4. **Start the development server**
+   ```bash
+   npm run dev
+   # or
+   pnpm dev
+   ```
 
-### 2. Visual Hierarchy and Layout
+5. **Open in browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
-The main `App.tsx` component is a long list of sections. This could be improved by:
+## 📁 Project Structure
 
--   **Using a stepper component**: A stepper component would guide the user through the workflow and make the process more intuitive.
--   **Collapsible sections**: Each step could be a collapsible section, allowing the user to focus on one step at a time.
+```
+artemis-engine/
+├── app/                    # Next.js 15 App Router
+│   ├── api/               # API routes (8 endpoints)
+│   │   ├── amplify-topic/
+│   │   ├── generate-blog/
+│   │   ├── generate-seo/
+│   │   ├── generate-social/
+│   │   ├── generate-visual/
+│   │   ├── publish-cms/
+│   │   └── publish-visuals/
+│   ├── layout.tsx         # Root layout
+│   ├── page.tsx          # Home page
+│   └── globals.css       # Global styles
+├── components/            # React components (11 components)
+│   ├── App.tsx           # Main orchestrator
+│   ├── GenerationSteps.tsx
+│   ├── TopicAmplifier.tsx
+│   ├── StepCard.tsx
+│   └── steps/            # Modular step components
+├── hooks/                # Custom hooks (7 hooks)
+│   ├── useArtemis.ts     # Main workflow orchestrator
+│   ├── useArtemisData.ts # Data management
+│   ├── useArtemisContent.ts # API integration
+│   ├── useArtemisUI.ts   # UI state
+│   └── useArtemisWorkflow.ts # Workflow logic
+├── types/                # TypeScript definitions
+│   └── artemis.ts        # Core types
+├── utils/                # Utility functions (8 utilities)
+│   ├── helpers.ts        # General helpers
+│   ├── openaiClient.ts   # OpenAI integration
+│   ├── googleSheets.ts   # Google Sheets API
+│   └── performance.ts    # Performance monitoring
+└── package.json
+```
 
-### 3. Loading States
+## 🔄 Workflow
 
-The current loading messages are simple text messages. These could be improved by:
+Artemis Engine follows a step-based workflow:
 
--   **Using DaisyUI's `loading` component**: DaisyUI provides loading spinners and other visual indicators that would make the loading state more engaging.
--   **Disabling buttons during loading**: Buttons that trigger long-running processes should be disabled and show a loading indicator to prevent multiple clicks.
+1. **Topic Amplification** - Generate topic ideas from keywords
+2. **Data Loading** - Import/manage topics from CSV files
+3. **Topic Selection** - Choose topics for content generation
+4. **Blog Generation** - Create blog posts with AI
+5. **SEO Optimization** - Generate meta data and keywords
+6. **Visual Creation** - Generate visual descriptions
+7. **Social Media** - Create platform-specific posts
+8. **Publishing** - Deploy to CMS and external platforms
 
-### 4. Button Styling
+## 🏗 Architecture
 
-The buttons in the `StepCard` component are plain HTML buttons. They should be styled with DaisyUI's `btn` classes to match the rest of the application.
+### Modular Hook System
 
-By addressing these points, the ARTEMIS application can be made more user-friendly, visually appealing, and consistent.
+Artemis uses a modular architecture with specialized hooks:
+
+- **`useArtemis`** - Main orchestrator combining all modules
+- **`useArtemisData`** - CSV processing and topic management
+- **`useArtemisContent`** - API calls and content generation
+- **`useArtemisUI`** - Loading states and UI interactions
+- **`useArtemisWorkflow`** - Step progression and workflow state
+
+### Performance Optimizations
+
+- React.memo for component optimization
+- useMemo and useCallback for expensive operations
+- CSV parsing with memoization
+- Performance monitoring utilities
+
+## 🔧 Development
+
+### Available Scripts
+
+```bash
+npm run dev      # Start development server
+npm run build    # Build for production  
+npm start        # Start production server
+npm run rm:del   # Clean reset (removes node_modules, .next, etc.)
+```
+
+### API Routes
+
+All content generation APIs support mock responses when API keys are not configured:
+
+- `POST /api/amplify-topic` - Topic ideation
+- `POST /api/generate-blog` - Blog content creation
+- `POST /api/generate-seo` - SEO optimization
+- `POST /api/generate-social` - Social media posts
+- `POST /api/generate-visual` - Visual descriptions
+- `POST /api/publish-cms` - Sanity CMS publishing
+- `POST /api/publish-visuals` - Google Sheets publishing
+
+### Environment Configuration
+
+The app gracefully handles missing API keys by providing mock responses, making it easy to develop and test without all integrations configured.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes
+4. Run the build: `npm run build`
+5. Commit your changes: `git commit -m 'Add feature'`
+6. Push to the branch: `git push origin feature-name`
+7. Open a pull request
+
+## 📄 License
+
+This project is private and proprietary.
+
+---
+
+**Author**: Bianca Wilkinson  
+**Framework**: Next.js 15 + React 19 + TypeScript

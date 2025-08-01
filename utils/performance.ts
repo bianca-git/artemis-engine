@@ -6,6 +6,7 @@ import React from 'react';
 
 export class PerformanceMonitor {
   private static measurements = new Map<string, number[]>();
+  private static readonly SLOW_OPERATION_THRESHOLD_MS = 100; // 100ms threshold
 
   static startMeasurement(name: string): string {
     const measurementId = `${name}-${Date.now()}-${Math.random()}`;
