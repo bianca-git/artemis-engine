@@ -49,6 +49,3 @@ export async function htmlToBlockContent(html: string) {
     return blocks;
 }
 */
-
-// Placeholder export to keep the file valid
-export const placeholderMessage = "HTML to Block Content conversion is temporarily disabled";
