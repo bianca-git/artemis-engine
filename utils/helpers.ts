@@ -97,5 +97,5 @@ export const truncateAtBoundary = (text: string, maxLength: number): string => {
   );
   
   // If we found a boundary, use it; otherwise use the full truncated text
-  return lastBoundary > maxLength * 0.7 ? truncated.substring(0, lastBoundary) : truncated;
+  return lastBoundary > maxLength * MIN_BOUNDARY_RATIO ? truncated.substring(0, lastBoundary) : truncated;
 };
