@@ -4,6 +4,8 @@ import { openaiClient, hasValidOpenAIKey } from '../../../utils/openaiClient';
 
 // Maximum length for heading detection in blog content
 const MAX_HEADING_LENGTH = 80;
+// Removed invalid instantiation of openaiClient; use openaiClient directly for API calls.
+
 
 export async function POST(request: Request) {
   const { topic, stream = false } = await request.json();
@@ -13,7 +15,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const response = await openai.responses.create({
+    const response = await openaiClient.responses.create({
       prompt: {
         id: "pmpt_688c4b3c1da88190bae98b455780bb1205afd50968eca7c0",
         version: "7",
