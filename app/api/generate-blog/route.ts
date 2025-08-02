@@ -9,6 +9,10 @@ const openai = new OpenAI({
 export async function POST(request: Request) {
   const { topic, stream = false } = await request.json();
 
+  if (stream) {
+    return NextResponse.json({ error: 'Streaming blog generation is not implemented.' }, { status: 501 });
+  }
+
   try {
     const response = await openai.responses.create({
       prompt: {
