@@ -5,10 +5,11 @@ export async function POST(request: Request) {
   const { topic } = await request.json();
   
   // Return mock data if no API key (for build/dev)
-  const mockContent = `This is a mock blog post about ${topic?.TITLE || 'a topic'}. ${topic?.CONTENT || 'Content will be generated here.'}`;
+  const mockContent = `This is a mock blog post about ${topic?.TITLE || topic?.CONTENT || 'a topic'}. ${topic?.CONTENT || 'Content will be generated here.'}`;
+  const title = topic?.TITLE?.trim() || topic?.CONTENT?.trim() || "Sample Title";
   const mockResponse = { 
     content: mockContent,
-    portableText: convertToPortableText(mockContent, topic?.TITLE || "Sample Title")
+    portableText: convertToPortableText(mockContent, title)
   };
 
   if (!hasValidOpenAIKey()) {
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     const response = await openaiClient.responses.create({
       prompt: {
         id: "pmpt_688c4b3c1da88190bae98b455780bb1205afd50968eca7c0",
-        version: "3", 
+        version: "6", 
         variables: {
           title: topic?.TITLE || "",
           content: topic?.CONTENT || ""
@@ -35,7 +36,8 @@ export async function POST(request: Request) {
       portableTextContent = JSON.parse(rawContent);
     } catch (err) {
       // fallback: treat as plain text if parsing fails
-      portableTextContent = convertToPortableText(rawContent, topic?.TITLE || "");
+      const title = topic?.TITLE?.trim() || topic?.CONTENT?.trim() || "Blog Post";
+      portableTextContent = convertToPortableText(rawContent, title);
     }
     
     return NextResponse.json({ 
@@ -57,9 +59,11 @@ function convertToPortableText(htmlContent: string, title: string) {
     }
   }
   
-  const blocks = [
-    // Title block
-    {
+  const blocks = [];
+  
+  // Only add title block if title is not empty
+  if (title && title.trim()) {
+    blocks.push({
       _type: 'block',
       _key: 'title',
       style: 'h1',
@@ -67,12 +71,12 @@ function convertToPortableText(htmlContent: string, title: string) {
         {
           _type: 'span',
           _key: 'title-span',
-          text: title,
+          text: title.trim(),
           marks: []
         }
       ]
-    }
-  ];
+    });
+  }
   
   // Convert content lines to paragraphs
   lines.forEach((line, index) => {

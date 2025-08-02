@@ -4,6 +4,7 @@ import { useArtemisContent } from "./useArtemisContent";
 import { useArtemisUI } from "./useArtemisUI";
 import { useWorkflowReset } from "./useGenericReset";
 import { useState, useCallback, useMemo } from "react";
+import { portableTextToPlainText } from "../utils/helpers";
 import type { Topic, BlogContent, SeoData, VisualDescription, SocialPost } from "../types/artemis";
 
 function useArtemis() {
@@ -107,8 +108,15 @@ function useArtemis() {
         ui.setIsLoadingBlog(true);
         try {
             const dataResult = await content.generateBlog(topic) as BlogContent;
-            setBlogContent(dataResult.content || "");
-            setPortableTextContent(dataResult.portableText || []);
+            
+            // Store both portable text and plain text versions
+            const portableText = dataResult.portableText || [];
+            const plainText = portableText.length > 0 
+                ? portableTextToPlainText(portableText)
+                : dataResult.content || "";
+            
+            setBlogContent(plainText);
+            setPortableTextContent(portableText);
             setWorkflowState((prev) => ({ ...prev, blog: true }));
         } catch (e) {
             setBlogContent("");

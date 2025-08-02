@@ -43,19 +43,44 @@ export const parseCsvData = (text: string): Record<string, string>[] => {
     
     // Parse data rows with improved CSV handling
     const data = lines.slice(1).map((line, lineIndex) => {
-      // Enhanced regex for better CSV parsing with quoted fields
-      const values = line.match(/("(?:[^"]|"")*"|[^",]*)/g) || [];
+      // More robust CSV parsing that handles quoted fields with commas
+      const values: string[] = [];
+      let currentValue = '';
+      let insideQuotes = false;
+      let i = 0;
+      
+      while (i < line.length) {
+        const char = line[i];
+        
+        if (char === '"') {
+          if (insideQuotes && line[i + 1] === '"') {
+            // Handle escaped quotes ("")
+            currentValue += '"';
+            i += 2;
+          } else {
+            // Toggle quote state
+            insideQuotes = !insideQuotes;
+            i++;
+          }
+        } else if (char === ',' && !insideQuotes) {
+          // Field separator found outside quotes
+          values.push(currentValue);
+          currentValue = '';
+          i++;
+        } else {
+          currentValue += char;
+          i++;
+        }
+      }
+      
+      // Add the last value
+      values.push(currentValue);
       
       return headers.reduce((obj, header, i) => {
         const rawValue = values[i] || '';
         
-        // Handle quoted values and sanitize for XSS prevention
-        let cleanValue = rawValue.startsWith('"') && rawValue.endsWith('"')
-          ? rawValue.slice(1, -1).replace(/""/g, '"')
-          : rawValue;
-        
         // Basic XSS prevention - escape HTML tags
-        cleanValue = cleanValue.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const cleanValue = rawValue.replace(/</g, '&lt;').replace(/>/g, '&gt;');
         
         obj[header] = cleanValue;
         return obj;
@@ -103,4 +128,39 @@ export const truncateAtBoundary = (text: string, maxLength: number): string => {
   
   // If we found a boundary, use it; otherwise use the full truncated text
   return lastBoundary > maxLength * MIN_BOUNDARY_RATIO ? truncated.substring(0, lastBoundary) : truncated;
+};
+
+/**
+ * Convert Portable Text blocks to plain text for editing/copying
+ */
+export const portableTextToPlainText = (portableText: any[]): string => {
+  if (!Array.isArray(portableText)) return '';
+  
+  return portableText
+    .map(block => {
+      if (block.type === 'block' && block.children) {
+        const text = block.children
+          .map((child: any) => child.text || '')
+          .join('');
+        
+        // Add appropriate spacing for different block styles
+        switch (block.style) {
+          case 'h1':
+            return `# ${text}\n\n`;
+          case 'h2':
+            return `## ${text}\n\n`;
+          case 'h3':
+            return `### ${text}\n\n`;
+          default:
+            // Handle list items
+            if (block.listItem === 'bullet') {
+              return `• ${text}\n`;
+            }
+            return `${text}\n\n`;
+        }
+      }
+      return '';
+    })
+    .join('')
+    .trim();
 };
