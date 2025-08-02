@@ -136,6 +136,12 @@ export interface ArtemisContent {
   amplifyTopic: (keyword: string) => Promise<{ ideas: any[] }>;
   generateSeo: (topic: Topic) => Promise<SeoData>;
   generateBlog: (topic: Topic) => Promise<BlogContent>;
+  generateBlogStreaming: (
+    topic: Topic,
+    onChunk: (content: string, portableText: any[]) => void,
+    onComplete: (content: string, portableText: any[]) => void,
+    onError: (error: string) => void
+  ) => Promise<void>;
   generateVisual: (prompt: string, scene: string, bodyLanguage: string) => Promise<{ descriptions: VisualDescription[] }>;
   generateSocial: (blog: string) => Promise<{ posts: SocialPost[] }>;
   publishToCms: (payload: CmsPayload) => Promise<any>;

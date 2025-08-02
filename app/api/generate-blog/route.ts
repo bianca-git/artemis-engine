@@ -1,27 +1,23 @@
 import { NextResponse } from 'next/server';
-import { openaiClient, hasValidOpenAIKey } from '../../../utils/openaiClient';
+import OpenAI from "openai";
 
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// No longer needed: always use OpenAI
 export async function POST(request: Request) {
-  const { topic } = await request.json();
-  
-  // Return mock data if no API key (for build/dev)
-  const mockContent = `This is a mock blog post about ${topic?.TITLE || topic?.CONTENT || 'a topic'}. ${topic?.CONTENT || 'Content will be generated here.'}`;
-  const title = topic?.TITLE?.trim() || topic?.CONTENT?.trim() || "Sample Title";
-  const mockResponse = { 
-    content: mockContent,
-    portableText: convertToPortableText(mockContent, title)
-  };
+  const { topic, stream = false } = await request.json();
 
-  if (!hasValidOpenAIKey()) {
-    return NextResponse.json(mockResponse);
+  if (stream) {
+    return NextResponse.json({ error: 'Streaming blog generation is not implemented.' }, { status: 501 });
   }
-  
+
   try {
-    // Call OpenAI with prompt to generate content as Portable Text JSON (stringified)
-    const response = await openaiClient.responses.create({
+    const response = await openai.responses.create({
       prompt: {
         id: "pmpt_688c4b3c1da88190bae98b455780bb1205afd50968eca7c0",
-        version: "6", 
+        version: "7",
         variables: {
           title: topic?.TITLE || "",
           content: topic?.CONTENT || ""
@@ -29,26 +25,20 @@ export async function POST(request: Request) {
       }
     });
 
-    // Parse the stringified Portable Text JSON array from output_text
     let portableTextContent: any[] = [];
     let rawContent = response?.output_text || "";
-    try {
-      portableTextContent = JSON.parse(rawContent);
-    } catch (err) {
-      // fallback: treat as plain text if parsing fails
-      const title = topic?.TITLE?.trim() || topic?.CONTENT?.trim() || "Blog Post";
-      portableTextContent = convertToPortableText(rawContent, title);
-    }
-    
-    return NextResponse.json({ 
+    portableTextContent = JSON.parse(rawContent);
+
+    return NextResponse.json({
       content: rawContent, // Keep for backward compatibility
       portableText: portableTextContent
     });
   } catch (error) {
     console.error('Blog generation error:', error);
-    return NextResponse.json(mockResponse);
+    return NextResponse.json({ error: 'Failed to generate blog content.' });
   }
 }
+
 
 function convertToPortableText(htmlContent: string, title: string) {
   // Simple conversion - split and filter content into paragraphs in a single step
