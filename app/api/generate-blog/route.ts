@@ -37,7 +37,7 @@ export async function POST(request: Request) {
         throw new Error('Invalid Portable Text format');
       }
     } catch (parseError) {
-      console.log('Converting plain text to Portable Text format');
+      console.warn('Converting plain text to Portable Text format');
       // Convert plain text to Portable Text using the helper function
       portableTextContent = convertToPortableText(rawContent, topic?.TITLE || "");
     }
