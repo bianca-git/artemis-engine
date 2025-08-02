@@ -1,14 +1,17 @@
 import React from 'react';
-import { Copy, Download } from 'lucide-react';
-import PortableTextRenderer from './PortableTextRenderer';
+import { Download } from 'lucide-react';
+import PortableTextEditor from './PortableTextEditor';
 import type { PortableTextBlock } from '@portabletext/types';
 
 interface BlogSectionProps {
   blog: string;
   blogPortableText: PortableTextBlock[] | null;
   isGenerating: boolean;
+  isStreamingBlog?: boolean;
+  streamingBlogContent?: string;
   onGenerate: () => void;
-  onCopy: () => void;
+  onGenerateStreaming?: () => void;
+  onBlogChange?: (content: PortableTextBlock[]) => void;
   onDownload: () => void;
 }
 
@@ -16,20 +19,48 @@ const BlogSection: React.FC<BlogSectionProps> = ({
   blog,
   blogPortableText,
   isGenerating,
+  isStreamingBlog = false,
+  streamingBlogContent = '',
   onGenerate,
-  onCopy,
+  onGenerateStreaming,
+  onBlogChange,
   onDownload,
 }) => {
+  const hasContent = blog || (blogPortableText && blogPortableText.length > 0);
+  const displayContent = blogPortableText || [];
+
+  const handleContentChange = (newContent: PortableTextBlock[]) => {
+    if (onBlogChange) {
+      onBlogChange(newContent);
+    }
+  };
+
   return (
     <div className="card bg-base-100 shadow-lg">
       <div className="card-body">
         <div className="flex items-center justify-between mb-4">
           <h3 className="card-title text-primary">Generated Blog Content</h3>
           <div className="flex gap-2">
+            {onGenerateStreaming && (
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={onGenerateStreaming}
+                disabled={isGenerating || isStreamingBlog}
+              >
+                {isStreamingBlog ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Streaming...
+                  </>
+                ) : (
+                  'Generate (Streaming)'
+                )}
+              </button>
+            )}
             <button
               className="btn btn-primary btn-sm"
               onClick={onGenerate}
-              disabled={isGenerating}
+              disabled={isGenerating || isStreamingBlog}
             >
               {isGenerating ? (
                 <span className="loading loading-spinner loading-sm"></span>
@@ -40,56 +71,63 @@ const BlogSection: React.FC<BlogSectionProps> = ({
           </div>
         </div>
 
-        {blog || blogPortableText ? (
+        {hasContent || isStreamingBlog ? (
           <div className="space-y-4">
-            {blogPortableText && blogPortableText.length > 0 ? (
-              <div className="border rounded-lg p-6 bg-base-50 dark:bg-base-200">
-                <PortableTextRenderer 
-                  content={blogPortableText}
-                />
-              </div>
-            ) : blog ? (
-              <div className="border rounded-lg p-6 bg-base-50 dark:bg-base-200">
-                <div className="prose prose-lg max-w-none">
-                  <p className="whitespace-pre-wrap">{blog}</p>
-                </div>
-              </div>
-            ) : null}
+            <PortableTextEditor
+              content={displayContent}
+              onChange={handleContentChange}
+              isStreaming={isStreamingBlog}
+              streamingContent={streamingBlogContent}
+              readOnly={false}
+            />
             
-            <div className="flex gap-2">
-              <button
-                className="btn btn-outline btn-sm"
-                onClick={onCopy}
-              >
-                <Copy className="w-4 h-4" />
-                Copy
-              </button>
-              <button
-                className="btn btn-outline btn-sm"
-                onClick={onDownload}
-              >
-                <Download className="w-4 h-4" />
-                Download
-              </button>
-            </div>
+            {hasContent && !isStreamingBlog && (
+              <div className="flex gap-2">
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={onDownload}
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-8">
             <p className="text-neutral-500 mb-4">No blog content generated yet.</p>
-            <button
-              className="btn btn-primary"
-              onClick={onGenerate}
-              disabled={isGenerating}
-            >
-              {isGenerating ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  Generating...
-                </>
-              ) : (
-                'Generate Blog Content'
+            <div className="flex gap-2 justify-center">
+              {onGenerateStreaming && (
+                <button
+                  className="btn btn-secondary"
+                  onClick={onGenerateStreaming}
+                  disabled={isGenerating || isStreamingBlog}
+                >
+                  {isStreamingBlog ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      Streaming...
+                    </>
+                  ) : (
+                    'Generate with Streaming'
+                  )}
+                </button>
               )}
-            </button>
+              <button
+                className="btn btn-primary"
+                onClick={onGenerate}
+                disabled={isGenerating || isStreamingBlog}
+              >
+                {isGenerating ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Generating...
+                  </>
+                ) : (
+                  'Generate Blog Content'
+                )}
+              </button>
+            </div>
           </div>
         )}
       </div>

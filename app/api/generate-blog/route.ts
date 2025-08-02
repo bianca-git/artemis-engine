@@ -2,15 +2,37 @@ import { NextResponse } from 'next/server';
 import { openaiClient, hasValidOpenAIKey } from '../../../utils/openaiClient';
 
 export async function POST(request: Request) {
-  const { topic } = await request.json();
+  const { topic, stream = false } = await request.json();
   
   // Return mock data if no API key (for build/dev)
-  const mockContent = `This is a mock blog post about ${topic?.TITLE || topic?.CONTENT || 'a topic'}. ${topic?.CONTENT || 'Content will be generated here.'}`;
+  const mockContent = `# ${topic?.TITLE || 'Sample Title'}
+
+${topic?.CONTENT || 'Content will be generated here.'}
+
+## Introduction
+
+This is a mock blog post about ${topic?.TITLE || topic?.CONTENT || 'a topic'}. The content generation system allows for both immediate and streaming responses.
+
+## Key Points
+
+- Point one: Important information about the topic
+- Point two: Additional insights and details
+- Point three: Practical applications and examples
+
+## Conclusion
+
+In conclusion, this demonstrates the streaming blog generation capability of the Artemis Engine system.`;
+
   const title = topic?.TITLE?.trim() || topic?.CONTENT?.trim() || "Sample Title";
   const mockResponse = { 
     content: mockContent,
     portableText: convertToPortableText(mockContent, title)
   };
+
+  // If streaming is requested, return streaming response
+  if (stream) {
+    return handleStreamingResponse(mockContent, !hasValidOpenAIKey());
+  }
 
   if (!hasValidOpenAIKey()) {
     return NextResponse.json(mockResponse);
@@ -48,6 +70,64 @@ export async function POST(request: Request) {
     console.error('Blog generation error:', error);
     return NextResponse.json(mockResponse);
   }
+}
+
+// Handle streaming response
+function handleStreamingResponse(content: string, isMock: boolean) {
+  const encoder = new TextEncoder();
+  
+  const customReadable = new ReadableStream({
+    start(controller) {
+      // Simulate streaming by sending content in chunks
+      const words = content.split(' ');
+      let currentContent = '';
+      let wordIndex = 0;
+      
+      function sendNextChunk() {
+        if (wordIndex >= words.length) {
+          // Send final completion event
+          const finalData = {
+            type: 'complete',
+            content: currentContent,
+            portableText: convertToPortableText(currentContent, ''),
+          };
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalData)}\n\n`));
+          controller.close();
+          return;
+        }
+        
+        // Add next word(s) - send multiple words for faster streaming in demo
+        const wordsToAdd = isMock ? Math.min(3, words.length - wordIndex) : 1;
+        for (let i = 0; i < wordsToAdd && wordIndex < words.length; i++) {
+          currentContent += (currentContent ? ' ' : '') + words[wordIndex];
+          wordIndex++;
+        }
+        
+        // Send current state
+        const data = {
+          type: 'chunk',
+          content: currentContent,
+          portableText: convertToPortableText(currentContent, ''),
+        };
+        
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+        
+        // Schedule next chunk
+        setTimeout(sendNextChunk, isMock ? 50 : 100);
+      }
+      
+      // Start streaming
+      sendNextChunk();
+    },
+  });
+
+  return new Response(customReadable, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
 }
 
 function convertToPortableText(htmlContent: string, title: string) {

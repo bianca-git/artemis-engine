@@ -25,6 +25,8 @@ function useArtemis() {
     });
     const [blogContent, setBlogContent] = useState("");
     const [portableTextContent, setPortableTextContent] = useState<any[]>([]);
+    const [isStreamingBlog, setIsStreamingBlog] = useState(false);
+    const [streamingBlogContent, setStreamingBlogContent] = useState("");
     const [imagePrompt, setImagePrompt] = useState("");
     const [imageScene, setImageScene] = useState("");
     const [bodyLanguage, setBodyLanguage] = useState("");
@@ -41,6 +43,8 @@ function useArtemis() {
     const resetValues = useMemo(() => ({
         blogContent: "",
         portableTextContent: [],
+        isStreamingBlog: false,
+        streamingBlogContent: "",
         imagePrompt: "",
         imageScene: "",
         bodyLanguage: "",
@@ -56,6 +60,8 @@ function useArtemis() {
     const resetSetters = useMemo(() => ({
         setBlogContent,
         setPortableTextContent,
+        setIsStreamingBlog,
+        setStreamingBlogContent,
         setImagePrompt,
         setImageScene,
         setBodyLanguage,
@@ -78,6 +84,8 @@ function useArtemis() {
     const resetGeneratedContent = useCallback(() => {
         setBlogContent("");
         setPortableTextContent([]);
+        setIsStreamingBlog(false);
+        setStreamingBlogContent("");
         setImagePrompt("");
         setImageScene("");
         setBodyLanguage("");
@@ -124,6 +132,44 @@ function useArtemis() {
             console.error('Blog generation error:', e);
         } finally {
             ui.setIsLoadingBlog(false);
+        }
+    }, [content, ui]);
+
+    // Streaming Blog Generation
+    const generateBlogStreaming = useCallback(async (topic: Topic) => {
+        ui.setIsLoadingBlog(true);
+        setIsStreamingBlog(true);
+        setStreamingBlogContent("");
+        setBlogContent("");
+        setPortableTextContent([]);
+        
+        const handleChunk = (content: string, portableText: any[]) => {
+            setStreamingBlogContent(content);
+            setPortableTextContent(portableText);
+        };
+        
+        const handleComplete = (content: string, portableText: any[]) => {
+            setBlogContent(content);
+            setPortableTextContent(portableText);
+            setIsStreamingBlog(false);
+            setStreamingBlogContent("");
+            setWorkflowState((prev) => ({ ...prev, blog: true }));
+            ui.setIsLoadingBlog(false);
+        };
+        
+        const handleError = (error: string) => {
+            console.error('Streaming blog generation error:', error);
+            setIsStreamingBlog(false);
+            setStreamingBlogContent("");
+            setBlogContent("");
+            setPortableTextContent([]);
+            ui.setIsLoadingBlog(false);
+        };
+        
+        try {
+            await content.generateBlogStreaming(topic, handleChunk, handleComplete, handleError);
+        } catch (e) {
+            handleError(e instanceof Error ? e.message : 'Unknown error');
         }
     }, [content, ui]);
 
@@ -235,6 +281,8 @@ function useArtemis() {
         // Local state
         blogContent, setBlogContent,
         portableTextContent, setPortableTextContent,
+        isStreamingBlog, setIsStreamingBlog,
+        streamingBlogContent, setStreamingBlogContent,
         imagePrompt, setImagePrompt,
         imageScene, setImageScene,
         bodyLanguage, setBodyLanguage,
@@ -256,6 +304,7 @@ function useArtemis() {
         addIdeaToCsv,
         generateSeo,
         generateBlog,
+        generateBlogStreaming,
         generateVisual,
         generateSocial,
         publishToCms,
