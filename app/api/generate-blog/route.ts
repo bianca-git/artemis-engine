@@ -27,7 +27,20 @@ export async function POST(request: Request) {
 
     let portableTextContent: any[] = [];
     let rawContent = response?.output_text || "";
-    portableTextContent = JSON.parse(rawContent);
+    
+    // Try to parse as JSON first, if it fails, convert plain text to Portable Text
+    try {
+      portableTextContent = JSON.parse(rawContent);
+      // Validate that it's actually an array of Portable Text blocks
+      if (!Array.isArray(portableTextContent) || 
+          (portableTextContent.length > 0 && !portableTextContent[0]._type)) {
+        throw new Error('Invalid Portable Text format');
+      }
+    } catch (parseError) {
+      console.warn('Converting plain text to Portable Text format');
+      // Convert plain text to Portable Text using the helper function
+      portableTextContent = convertToPortableText(rawContent, topic?.TITLE || "");
+    }
 
     return NextResponse.json({
       content: rawContent, // Keep for backward compatibility
@@ -35,23 +48,27 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Blog generation error:', error);
-    return NextResponse.json({ error: 'Failed to generate blog content.' });
+    
+    // Return a fallback response with empty but valid Portable Text structure
+    return NextResponse.json({
+      content: "",
+      portableText: [],
+      error: 'Failed to generate blog content. Please try again.'
+    });
   }
 }
 
 
 function convertToPortableText(htmlContent: string, title: string) {
-  // Simple conversion - split and filter content into paragraphs in a single step
-  const lines = [];
-  for (const line of htmlContent.split('\n')) {
-    if (line.trim()) {
-      lines.push(line);
-    }
-  }
+  // Clean and split content into lines, filtering empty ones
+  const lines = htmlContent
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
   
   const blocks = [];
   
-  // Only add title block if title is not empty
+  // Add title block if title is provided and not empty
   if (title && title.trim()) {
     blocks.push({
       _type: 'block',
@@ -68,27 +85,59 @@ function convertToPortableText(htmlContent: string, title: string) {
     });
   }
   
-  // Convert content lines to paragraphs
+  // Convert content lines to paragraphs with proper block structure
   lines.forEach((line, index) => {
     if (line.trim()) {
-      // Check if line looks like a heading
-      const isHeading = line.startsWith('#') || line.match(/^[A-Z][^.]*:?\s*$/);
+      let style = 'normal';
+      let cleanText = line;
+      
+      // Detect various heading patterns
+      if (line.startsWith('###')) {
+        style = 'h3';
+        cleanText = line.replace(/^###\s*/, '');
+      } else if (line.startsWith('##')) {
+        style = 'h2';
+        cleanText = line.replace(/^##\s*/, '');
+      } else if (line.startsWith('#')) {
+        style = 'h1';
+        cleanText = line.replace(/^#\s*/, '');
+      } else if (line.match(/^[A-Z][^.]*:?\s*$/) && line.length < MAX_HEADING_LENGTH) {
+        // Short lines that look like headings (all caps or title case, ending with : or nothing)
+        style = 'h2';
+      }
       
       blocks.push({
         _type: 'block',
         _key: `block-${index}`,
-        style: isHeading ? 'h2' : 'normal',
+        style,
         children: [
           {
             _type: 'span',
             _key: `span-${index}`,
-            text: line.replace(/^#+\s*|^[A-Z][^.]*:?\s*/, ''), // Remove markdown headers and other heading patterns
+            text: cleanText,
             marks: []
           }
         ]
       });
     }
   });
+  
+  // If no blocks were created, add a default empty block
+  if (blocks.length === 0) {
+    blocks.push({
+      _type: 'block',
+      _key: 'empty-block',
+      style: 'normal',
+      children: [
+        {
+          _type: 'span',
+          _key: 'empty-span',
+          text: 'No content generated. Please try again.',
+          marks: []
+        }
+      ]
+    });
+  }
   
   return blocks;
 }

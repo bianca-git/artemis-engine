@@ -138,7 +138,7 @@ export const portableTextToPlainText = (portableText: any[]): string => {
   
   return portableText
     .map(block => {
-      if (block.type === 'block' && block.children) {
+      if (block._type === 'block' && block.children) {
         const text = block.children
           .map((child: any) => child.text || '')
           .join('');

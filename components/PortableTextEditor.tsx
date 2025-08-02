@@ -166,7 +166,7 @@ const PortableTextEditor = ({
   if (isStreaming && streamingContent) {
     const streamBlocks = convertToPortableText(streamingContent);
     return (
-      <div className={`${className}`}>
+      <div className={className}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-sm text-secondary">Generating content...</span>
@@ -188,7 +188,7 @@ const PortableTextEditor = ({
   // Show editing interface
   if (isEditing) {
     return (
-      <div className={`${className}`}>
+      <div className={className}>
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm text-secondary">Editing content (Markdown supported)</span>
           <div className="flex gap-2">
@@ -224,7 +224,7 @@ const PortableTextEditor = ({
 
   // Show read-only or editable view
   return (
-    <div className={`${className}`}>
+    <div className={className}>
       {!readOnly && (
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm text-secondary">Content</span>
