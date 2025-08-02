@@ -39,66 +39,6 @@ export async function POST(request: Request) {
   }
 }
 
-// Handle streaming response
-const MOCK_CHUNK_DELAY_MS = 80; // ms delay between chunks for mock streaming
-const REAL_CHUNK_DELAY_MS = 30; // ms delay between chunks for real streaming
-
-function handleStreamingResponse(content: string, isMock: boolean) {
-  const encoder = new TextEncoder();
-  
-  const customReadable = new ReadableStream({
-    start(controller) {
-      // Simulate streaming by sending content in chunks
-      const words = content.split(' ');
-      let currentContent = '';
-      let wordIndex = 0;
-      
-      function sendNextChunk() {
-        if (wordIndex >= words.length) {
-          // Send final completion event
-          const finalData = {
-            type: 'complete',
-            content: currentContent,
-            portableText: convertToPortableText(currentContent, ''),
-          };
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(finalData)}\n\n`));
-          controller.close();
-          return;
-        }
-        
-        // Add next word(s) - send multiple words for faster streaming in demo
-        const wordsToAdd = isMock ? Math.min(3, words.length - wordIndex) : 1;
-        for (let i = 0; i < wordsToAdd && wordIndex < words.length; i++) {
-          currentContent += (currentContent ? ' ' : '') + words[wordIndex];
-          wordIndex++;
-        }
-        
-        // Send current state
-        const data = {
-          type: 'chunk',
-          content: currentContent,
-          portableText: convertToPortableText(currentContent, ''),
-        };
-        
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-        
-        // Schedule next chunk
-        setTimeout(sendNextChunk, isMock ? MOCK_CHUNK_DELAY_MS : REAL_CHUNK_DELAY_MS);
-      }
-      
-      // Start streaming
-      sendNextChunk();
-    },
-  });
-
-  return new Response(customReadable, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-    },
-  });
-}
 
 function convertToPortableText(htmlContent: string, title: string) {
   // Simple conversion - split and filter content into paragraphs in a single step
