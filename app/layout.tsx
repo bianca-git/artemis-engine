@@ -1,5 +1,6 @@
 import "./globals.css";
 import Head from "next/head";
+import { Analytics } from "@vercel/analytics/next"
 
 export const metadata = {
   title: "A.R.T.E.M.I.S",
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </Head>
       <body className="bg-base-100 min-h-screen p-0 m-0 mx-auto">
         {children}
+        <Analytics />
       </body>
     </html>
   );

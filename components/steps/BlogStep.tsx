@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from "react";
 import StepCard from "../StepCard";
-import BlogSection from "../BlogSection";
-import { portableTextToPlainText } from "../../utils/helpers";
+import PortableTextRenderer from "../PortableTextRenderer";
 
 /**
  * Optimized BlogStep component with React performance optimizations
@@ -11,12 +10,7 @@ const BlogStep = React.memo(({
   resetBlog,
   blogContent,
   portableTextContent,
-  isStreamingBlog,
-  streamingBlogContent,
   generateBlog,
-  generateBlogStreaming,
-  setBlogContent,
-  setPortableTextContent,
   isLoadingBlog,
   activeTopic,
 }: any) => {
@@ -24,52 +18,49 @@ const BlogStep = React.memo(({
     generateBlog(activeTopic);
   }, [generateBlog, activeTopic]);
 
-  const handleGenerateBlogStreaming = useCallback(() => {
-    generateBlogStreaming(activeTopic);
-  }, [generateBlogStreaming, activeTopic]);
+  const hasContent = useMemo(() => 
+    portableTextContent?.length > 0 || blogContent,
+    [portableTextContent, blogContent]
+  );
 
-  const handleBlogChange = useCallback((newContent: any[]) => {
-    setPortableTextContent(newContent);
-    // Also update the plain text version
-    const plainText = portableTextToPlainText(newContent);
-    setBlogContent(plainText);
-  }, [setPortableTextContent, setBlogContent]);
+  const blogButton = useMemo(() => {
+    if (hasContent) return null;
+    
+    return (
+      <div className="flex flex-col gap-2">
+        <button
+          className="btn btn-primary btn-block"
+          onClick={handleGenerateBlog}
+          disabled={isLoadingBlog}
+        >
+          GENERATE BLOG
+        </button>
+        {isLoadingBlog && (
+          <div className="alert alert-info">The Siren is contemplating...</div>
+        )}
+      </div>
+    );
+  }, [hasContent, handleGenerateBlog, isLoadingBlog]);
 
-  const handleDownload = useCallback(() => {
-    if (blogContent) {
-      const element = document.createElement('a');
-      const file = new Blob([blogContent], { type: 'text/plain' });
-      element.href = URL.createObjectURL(file);
-      element.download = `blog-${Date.now()}.txt`;
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
+  const contentRenderer = useMemo(() => {
+    if (portableTextContent?.length > 0) {
+      return <PortableTextRenderer content={portableTextContent} />;
     }
-  }, [blogContent]);
+
+    // Optionally, render blogContent as plain text or HTML if it's a string
+    if (blogContent && !portableTextContent?.length) {
+      return <div>{blogContent}</div>;
+    }
+
+    return null;
+  }, [portableTextContent, blogContent]);
 
   const stepContent = useMemo(() => (
-    <BlogSection
-      blog={blogContent}
-      blogPortableText={portableTextContent}
-      isGenerating={isLoadingBlog}
-      isStreamingBlog={isStreamingBlog}
-      streamingBlogContent={streamingBlogContent}
-      onGenerate={handleGenerateBlog}
-      onGenerateStreaming={handleGenerateBlogStreaming}
-      onBlogChange={handleBlogChange}
-      onDownload={handleDownload}
-    />
-  ), [
-    blogContent, 
-    portableTextContent, 
-    isLoadingBlog, 
-    isStreamingBlog,
-    streamingBlogContent,
-    handleGenerateBlog, 
-    handleGenerateBlogStreaming,
-    handleBlogChange,
-    handleDownload
-  ]);
+    <>
+      {blogButton}
+      {contentRenderer}
+    </>
+  ), [blogButton, contentRenderer]);
 
   const stepConfig = useMemo(() => ({
     title: "Generate Blog Post",

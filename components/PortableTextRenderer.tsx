@@ -66,10 +66,19 @@ const PortableTextRenderer: React.FC<PortableTextRendererProps> = ({
     return <div className="text-neutral-500">No content to display</div>;
   }
 
+  // Allow all blocks with a valid _type property
+  const validBlocks = content.filter(
+    (block: any) => block && typeof block._type === 'string'
+  );
+
+  if (validBlocks.length === 0) {
+    return <div className="text-neutral-500">No valid content to display</div>;
+  }
+
   return (
     <div className={`prose prose-lg prose-slate dark:prose-invert max-w-none ${className}`}>
       <PortableText 
-        value={content} 
+        value={validBlocks} 
         components={components}
       />
     </div>

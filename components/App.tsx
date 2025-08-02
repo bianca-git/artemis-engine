@@ -7,6 +7,7 @@ import TopicWorkflowSection from "./TopicWorkflowSection";
 import GenerationSteps from "./GenerationSteps";
 import { ErrorBoundary } from "./ErrorBoundary";
 
+
 /**
  * Optimized main App component with error boundary and memoized props
  */

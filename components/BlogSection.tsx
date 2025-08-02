@@ -1,39 +1,28 @@
 import React from 'react';
-import { Download } from 'lucide-react';
-import PortableTextEditor from './PortableTextEditor';
+import { Copy, Download, Eye, Edit } from 'lucide-react';
+import PortableTextRenderer from './PortableTextRenderer';
 import type { PortableTextBlock } from '@portabletext/types';
 
 interface BlogSectionProps {
   blog: string;
   blogPortableText: PortableTextBlock[] | null;
   isGenerating: boolean;
-  isStreamingBlog?: boolean;
-  streamingBlogContent?: string;
   onGenerate: () => void;
-  onGenerateStreaming?: () => void;
-  onBlogChange?: (content: PortableTextBlock[]) => void;
+  onCopy: () => void;
   onDownload: () => void;
+  onBlogChange: (value: string) => void;
 }
 
 const BlogSection: React.FC<BlogSectionProps> = ({
   blog,
   blogPortableText,
   isGenerating,
-  isStreamingBlog = false,
-  streamingBlogContent = '',
   onGenerate,
-  onGenerateStreaming,
-  onBlogChange,
+  onCopy,
   onDownload,
+  onBlogChange,
 }) => {
-  const hasContent = blog || (blogPortableText && blogPortableText.length > 0);
-  const displayContent = blogPortableText || [];
-
-  const handleContentChange = (newContent: PortableTextBlock[]) => {
-    if (onBlogChange) {
-      onBlogChange(newContent);
-    }
-  };
+  const [viewMode, setViewMode] = React.useState<'preview' | 'edit'>('preview');
 
   return (
     <div className="card bg-base-100 shadow-lg">
@@ -41,26 +30,27 @@ const BlogSection: React.FC<BlogSectionProps> = ({
         <div className="flex items-center justify-between mb-4">
           <h3 className="card-title text-primary">Generated Blog Content</h3>
           <div className="flex gap-2">
-            {onGenerateStreaming && (
+            <div className="btn-group">
               <button
-                className="btn btn-secondary btn-sm"
-                onClick={onGenerateStreaming}
-                disabled={isGenerating || isStreamingBlog}
+                className={`btn btn-sm ${viewMode === 'preview' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setViewMode('preview')}
+                disabled={!blogPortableText}
               >
-                {isStreamingBlog ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm"></span>
-                    Streaming...
-                  </>
-                ) : (
-                  'Generate (Streaming)'
-                )}
+                <Eye className="w-4 h-4" />
+                Preview
               </button>
-            )}
+              <button
+                className={`btn btn-sm ${viewMode === 'edit' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setViewMode('edit')}
+              >
+                <Edit className="w-4 h-4" />
+                Edit
+              </button>
+            </div>
             <button
               className="btn btn-primary btn-sm"
               onClick={onGenerate}
-              disabled={isGenerating || isStreamingBlog}
+              disabled={isGenerating}
             >
               {isGenerating ? (
                 <span className="loading loading-spinner loading-sm"></span>
@@ -71,63 +61,62 @@ const BlogSection: React.FC<BlogSectionProps> = ({
           </div>
         </div>
 
-        {hasContent || isStreamingBlog ? (
+        {blog || blogPortableText ? (
           <div className="space-y-4">
-            <PortableTextEditor
-              content={displayContent}
-              onChange={handleContentChange}
-              isStreaming={isStreamingBlog}
-              streamingContent={streamingBlogContent}
-              readOnly={false}
-            />
-            
-            {hasContent && !isStreamingBlog && (
-              <div className="flex gap-2">
-                <button
-                  className="btn btn-outline btn-sm"
-                  onClick={onDownload}
-                >
-                  <Download className="w-4 h-4" />
-                  Download
-                </button>
+            {viewMode === 'preview' && blogPortableText ? (
+              <div className="border rounded-lg p-4 bg-base-50">
+                <PortableTextRenderer 
+                  content={blogPortableText}
+                  className="prose-sm"
+                />
               </div>
-            )}
+            ) : null}
+            {viewMode === 'edit' ? (
+              <div className="border rounded-lg p-4 bg-base-50">
+                <textarea
+                  className="textarea textarea-bordered w-full"
+                  rows={10}
+                  value={blog}
+                  readOnly={isGenerating}
+                  onChange={e => onBlogChange(e.target.value)}
+                  placeholder="Edit your blog content here..."
+                />
+              </div>
+            ) : null}
+            <div className="flex gap-2">
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={onCopy}
+              >
+                <Copy className="w-4 h-4" />
+                Copy
+              </button>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={onDownload}
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </button>
+            </div>
           </div>
         ) : (
           <div className="text-center py-8">
             <p className="text-neutral-500 mb-4">No blog content generated yet.</p>
-            <div className="flex gap-2 justify-center">
-              {onGenerateStreaming && (
-                <button
-                  className="btn btn-secondary"
-                  onClick={onGenerateStreaming}
-                  disabled={isGenerating || isStreamingBlog}
-                >
-                  {isStreamingBlog ? (
-                    <>
-                      <span className="loading loading-spinner loading-sm"></span>
-                      Streaming...
-                    </>
-                  ) : (
-                    'Generate with Streaming'
-                  )}
-                </button>
+            <button
+              className="btn btn-primary"
+              onClick={onGenerate}
+              disabled={isGenerating}
+            >
+              {isGenerating ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  Generating...
+                </>
+              ) : (
+                'Generate Blog Content'
               )}
-              <button
-                className="btn btn-primary"
-                onClick={onGenerate}
-                disabled={isGenerating || isStreamingBlog}
-              >
-                {isGenerating ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm"></span>
-                    Generating...
-                  </>
-                ) : (
-                  'Generate Blog Content'
-                )}
-              </button>
-            </div>
+            </button>
           </div>
         )}
       </div>
