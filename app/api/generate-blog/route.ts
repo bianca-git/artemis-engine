@@ -1,5 +1,9 @@
+
 import { NextResponse } from 'next/server';
 import { openaiClient, hasValidOpenAIKey } from '../../../utils/openaiClient';
+
+// Maximum length for heading detection in blog content
+const MAX_HEADING_LENGTH = 80;
 
 export async function POST(request: Request) {
   const { topic } = await request.json();
