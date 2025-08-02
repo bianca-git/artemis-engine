@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from "react";
 import StepCard from "../StepCard";
 import BlogSection from "../BlogSection";
+import { portableTextToPlainText } from "../../utils/helpers";
 
 /**
  * Optimized BlogStep component with React performance optimizations
@@ -10,7 +11,12 @@ const BlogStep = React.memo(({
   resetBlog,
   blogContent,
   portableTextContent,
+  isStreamingBlog,
+  streamingBlogContent,
   generateBlog,
+  generateBlogStreaming,
+  setBlogContent,
+  setPortableTextContent,
   isLoadingBlog,
   activeTopic,
 }: any) => {
@@ -18,11 +24,16 @@ const BlogStep = React.memo(({
     generateBlog(activeTopic);
   }, [generateBlog, activeTopic]);
 
-  const handleCopy = useCallback(() => {
-    if (blogContent) {
-      navigator.clipboard.writeText(blogContent);
-    }
-  }, [blogContent]);
+  const handleGenerateBlogStreaming = useCallback(() => {
+    generateBlogStreaming(activeTopic);
+  }, [generateBlogStreaming, activeTopic]);
+
+  const handleBlogChange = useCallback((newContent: any[]) => {
+    setPortableTextContent(newContent);
+    // Also update the plain text version
+    const plainText = portableTextToPlainText(newContent);
+    setBlogContent(plainText);
+  }, [setPortableTextContent, setBlogContent]);
 
   const handleDownload = useCallback(() => {
     if (blogContent) {
@@ -41,11 +52,24 @@ const BlogStep = React.memo(({
       blog={blogContent}
       blogPortableText={portableTextContent}
       isGenerating={isLoadingBlog}
+      isStreamingBlog={isStreamingBlog}
+      streamingBlogContent={streamingBlogContent}
       onGenerate={handleGenerateBlog}
-      onCopy={handleCopy}
+      onGenerateStreaming={handleGenerateBlogStreaming}
+      onBlogChange={handleBlogChange}
       onDownload={handleDownload}
     />
-  ), [blogContent, portableTextContent, isLoadingBlog, handleGenerateBlog, handleCopy, handleDownload]);
+  ), [
+    blogContent, 
+    portableTextContent, 
+    isLoadingBlog, 
+    isStreamingBlog,
+    streamingBlogContent,
+    handleGenerateBlog, 
+    handleGenerateBlogStreaming,
+    handleBlogChange,
+    handleDownload
+  ]);
 
   const stepConfig = useMemo(() => ({
     title: "Generate Blog Post",
