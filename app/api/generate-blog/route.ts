@@ -73,6 +73,9 @@ In conclusion, this demonstrates the streaming blog generation capability of the
 }
 
 // Handle streaming response
+const MOCK_CHUNK_DELAY_MS = 80; // ms delay between chunks for mock streaming
+const REAL_CHUNK_DELAY_MS = 30; // ms delay between chunks for real streaming
+
 function handleStreamingResponse(content: string, isMock: boolean) {
   const encoder = new TextEncoder();
   
@@ -113,7 +116,7 @@ function handleStreamingResponse(content: string, isMock: boolean) {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
         
         // Schedule next chunk
-        setTimeout(sendNextChunk, isMock ? 50 : 100);
+        setTimeout(sendNextChunk, isMock ? MOCK_CHUNK_DELAY_MS : REAL_CHUNK_DELAY_MS);
       }
       
       // Start streaming

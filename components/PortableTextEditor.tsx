@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { PortableText } from '@portabletext/react';
 import type { PortableTextBlock } from '@portabletext/types';
 import { Edit3, Save, X } from 'lucide-react';
@@ -12,16 +12,19 @@ interface PortableTextEditorProps {
   readOnly?: boolean;
 }
 
-const PortableTextEditor: React.FC<PortableTextEditorProps> = ({ 
+const PortableTextEditor = ({ 
   content, 
   onChange,
   isStreaming = false,
   streamingContent = '',
   className = '',
   readOnly = false
-}) => {
+}: PortableTextEditorProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingText, setEditingText] = useState('');
+
+  // Ensure a return in all code paths
+  // (rest of the component code remains unchanged)
 
   // Custom components for rendering Portable Text
   const components = {
@@ -76,14 +79,25 @@ const PortableTextEditor: React.FC<PortableTextEditorProps> = ({
   };
 
   // Convert Portable Text blocks to plain text for editing
+  // Type guard to check if a child is a span with a text property
+  function isSpanWithText(child: any): child is { text: string } {
+    return child && child._type === 'span' && typeof child.text === 'string';
+  }
+
   const convertToPlainText = useCallback((blocks: PortableTextBlock[]): string => {
     return blocks.map(block => {
       if (block.style === 'h1' || block.style === 'h2' || block.style === 'h3') {
         const prefix = '#'.repeat(parseInt(block.style.charAt(1)));
-        const text = block.children.map(child => child.text).join('');
+        const text = block.children
+          .filter(isSpanWithText)
+          .map(child => child.text)
+          .join('');
         return `${prefix} ${text}`;
       }
-      return block.children.map(child => child.text).join('');
+      return block.children
+        .filter(isSpanWithText)
+        .map(child => child.text)
+        .join('');
     }).join('\n\n');
   }, []);
 

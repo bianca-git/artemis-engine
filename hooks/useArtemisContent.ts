@@ -85,7 +85,7 @@ export function useArtemisContent() {
                     return;
                   }
                 } catch (e) {
-                  console.warn('Failed to parse streaming data:', e);
+                  console.warn(`Failed to parse streaming data '${data}':`, e);
                 }
               }
             }
