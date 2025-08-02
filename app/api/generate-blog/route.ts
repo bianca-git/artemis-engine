@@ -101,7 +101,7 @@ function convertToPortableText(htmlContent: string, title: string) {
       } else if (line.startsWith('#')) {
         style = 'h1';
         cleanText = line.replace(/^#\s*/, '');
-      } else if (line.match(/^[A-Z][^.]*:?\s*$/) && line.length < 100) {
+      } else if (line.match(/^[A-Z][^.]*:?\s*$/) && line.length < MAX_HEADING_LENGTH) {
         // Short lines that look like headings (all caps or title case, ending with : or nothing)
         style = 'h2';
       }
