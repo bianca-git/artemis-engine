@@ -169,7 +169,7 @@ function parseInlineMarkdown(text: string): any[] {
     const segments = [];
 
     // Use a new regex instance for each iteration of the text.
-    const localRegex = new RegExp(regex);
+    const localRegex = regex.lastIndex = 0;
     let match;
 
     while ((match = localRegex.exec(currentText)) !== null) {
