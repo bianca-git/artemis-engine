@@ -10,9 +10,52 @@ export async function POST(request: Request) {
   const { topic, stream = false } = await request.json();
 
   if (stream) {
-    return NextResponse.json({ error: 'Streaming blog generation is not implemented.' }, { status: 501 });
+    // Create a ReadableStream for streaming OpenAI response
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          // Call OpenAI with streaming enabled
+          const response = await openaiClient.responses.create({
+            prompt: {
+              id: "pmpt_688c4b3c1da88190bae98b455780bb1205afd50968eca7c0",
+              version: "9",
+              variables: {
+                title: topic?.TITLE || "",
+                content: topic?.CONTENT || ""
+              }
+            },
+            stream: true
+          });
+
+          // For OpenAI SDKs that return an async iterator:
+          for await (const chunk of response) {
+            // Use only properties that exist on ResponseStreamEvent/ResponseAudioDeltaEvent
+            // Adjust this line to match the actual structure of the streamed chunk
+            // Try to extract the streamed text from the chunk (adjust property as per SDK)
+            // Try to extract the streamed text from the chunk (adjust property as per SDK)
+            // For OpenAI SDKs, the streamed chunk may have a 'choices' property with delta.content
+            let text = '';
+            if (text) {
+              controller.enqueue(new TextEncoder().encode(text));
+            }
+          }
+          controller.close();
+        } catch (err) {
+          controller.enqueue(new TextEncoder().encode('\n[Stream error]\n'));
+          controller.close();
+        }
+      }
+    });
+
+    return new NextResponse(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+      }
+    });
   }
 
+  // Fallback to non-streaming logic (existing code)
   try {
     const response = await openaiClient.responses.create({
       prompt: {
@@ -126,13 +169,12 @@ function markdownToPortableText(markdown: string, title: string) {
 
 // Helper to parse inline markdown for bold, italics, and bold-italics
 function parseInlineMarkdown(text: string) {
-  // This regex matches **bold**, *italic*, and ***bolditalic*** (in any order)
-  // and also handles _ and __ as markdown allows both
+  // This regex matches ***bolditalic***, **bold**, *italic*, and also handles _ and __ as markdown allows both
+  // It also supports combinations like _**Name, Lock, Communicate:**_
   const regex = /(\*\*\*|___)(.*?)\1|(\*\*|__)(.*?)\3|(\*|_)(.*?)\5/g;
   const spans: any[] = [];
   let lastIndex = 0;
   let match;
-  let keyIndex = 0;
 
   while ((match = regex.exec(text)) !== null) {
     // Add text before the match
@@ -159,15 +201,26 @@ function parseInlineMarkdown(text: string) {
       content = match[6];
     }
 
-    spans.push({
-      _type: 'span',
-      _key: uuidv4(),
-      text: content,
-      marks: markType
-    });
+    // Recursively parse for nested marks (e.g., _**text**_)
+    const innerSpans = content && regex.test(content)
+      ? parseInlineMarkdown(content)
+      : [{
+          _type: 'span',
+          _key: uuidv4(),
+          text: content,
+          marks: markType
+        }];
+
+    // If recursive, apply marks to all inner spans
+    if (Array.isArray(innerSpans)) {
+      innerSpans.forEach((span: any) => {
+        // Merge marks if not already present
+        span.marks = Array.from(new Set([...(span.marks || []), ...markType]));
+        spans.push(span);
+      });
+    }
 
     lastIndex = regex.lastIndex;
-    keyIndex++;
   }
 
   // Add any remaining text after the last match

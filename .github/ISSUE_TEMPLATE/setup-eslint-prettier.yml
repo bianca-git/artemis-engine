@@ -1,0 +1,18 @@
+name: "➕ Add ESLint, Prettier, and CI linting"
+description: "Add ESLint & Prettier configs, lint-staged pre-commit hook, and update CI scripts."
+title: "[cleanup] Configure ESLint, Prettier, and CI linting"
+labels:
+  - cleanup
+  - tooling
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The repository has `@eslint/js` installed but no ESLint config or lint script. The CI workflow expects pnpm lint but there is no such script.
+
+        **Tasks:**
+        - Create `.eslintrc.js` with React and TypeScript rules.
+        - Add Prettier config or integrate formatting rules into ESLint.
+        - Add `lint` script to package.json ("lint": "eslint . --ext .ts,.tsx").
+        - Configure lint-staged with husky to run lint before commits.
+        - Update CI workflow to run pnpm lint.

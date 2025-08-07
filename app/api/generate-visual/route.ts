@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { hasValidOpenAIKey } from '../../../utils/openaiClient';
+import { GoogleGenAI } from '@google/genai';
 
 /**
- * Optimized visual generation API with input validation and consistent error handling
+ * Visual generation API using Google GenAI (Imagen 4.0 Ultra)
  */
 export async function POST(request: Request) {
   const { prompt, scene, bodyLanguage } = await request.json();
-  
+
   // Input validation
   if (!prompt?.trim() || !scene?.trim() || !bodyLanguage?.trim()) {
     return NextResponse.json({
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
   }
 
   // Return mock data if no API key
-  if (!hasValidOpenAIKey()) {
+  if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json({
       descriptions: [
         {
@@ -26,67 +27,53 @@ export async function POST(request: Request) {
           "Keywords": ["mock", "visual", "content"],
           "Platform": "Instagram"
         }
-      ]
+      ],
+      images: []
     });
   }
 
   try {
-    const openaiPayload = {
-      model: "gpt-4-turbo",
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert AI visual strategist. Your task is to generate a list of 5 detailed image descriptions based on a theme, a scene, and body language. For each image, provide a descriptive name, a caption plan, target audience, relevant keywords, and the best social media platform. The output should be a JSON object with a single key "image_descriptions" which contains an array of these 5 objects. Each object in the array must have the following keys: "Image Name", "Caption Plan", "Target Audience", "Keywords", and "Platform".`
-        },
-        {
-          role: "user",
-          content: `Generate the image descriptions for the theme: "${prompt}", with the scene: "${scene}", and body language: "${bodyLanguage}"`
-        }
-      ],
-      temperature: 0.8,
-      max_tokens: 2048,
-      top_p: 1,
-    };
-
-    const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify(openaiPayload),
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY!,
     });
 
-    if (!openaiRes.ok) {
-      const apiError = await openaiRes.text();
-      throw new Error(`OpenAI image description generation failed: ${openaiRes.status} ${openaiRes.statusText} - ${apiError}`);
+    // Compose a detailed prompt for the model
+    const fullPrompt = `Theme: ${prompt}\nScene: ${scene}\nBody Language: ${bodyLanguage}\nGenerate a visually engaging image for social media.`;
+
+    const response = await ai.models.generateImages({
+      model: 'models/imagen-4.0-ultra-generate-preview-06-06',
+      prompt: fullPrompt,
+      config: {
+        numberOfImages: 1,
+        outputMimeType: 'image/jpeg',
+        aspectRatio: '16:9',
+      },
+    });
+
+    if (!response?.generatedImages || response.generatedImages.length === 0) {
+      throw new Error('No images generated.');
     }
 
-    const openaiResult = await openaiRes.json();
-    const imageDescriptionsText = openaiResult.choices[0].message.content;
-    const imageDescriptionsData = JSON.parse(imageDescriptionsText);
-    const imageDescriptions = imageDescriptionsData.image_descriptions;
+    // Return base64-encoded images in the response
+    const images = response.generatedImages.map(img =>
+      img?.image?.imageBytes ? `data:image/jpeg;base64,${img.image.imageBytes}` : null
+    ).filter(Boolean);
 
-    if (!Array.isArray(imageDescriptions) || imageDescriptions.length === 0) {
-      throw new Error('No image descriptions returned from OpenAI');
-    }
-
-    return NextResponse.json({ 
-      success: true, 
-      descriptions: imageDescriptions, 
-      prompt 
+    return NextResponse.json({
+      success: true,
+      images,
+      prompt,
     });
 
   } catch (err: any) {
     const error = err?.message || String(err);
-    console.error('Image description generation error:', error);
-    
-    return NextResponse.json({ 
-      success: false, 
-      descriptions: null, 
-      prompt, 
-      error 
+    console.error('Image generation error:', error);
+
+    return NextResponse.json({
+      success: false,
+      images: [],
+      prompt,
+      error
     }, { status: 500 });
   }
 }

@@ -1,0 +1,16 @@
+name: "➕ Enable strict TypeScript settings"
+description: "Turn on strict mode and related compiler options in tsconfig.json"
+title: "[cleanup] Enable strict TypeScript settings"
+labels:
+  - cleanup
+  - typescript
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The project’s `tsconfig.json` currently has "strict": false. We should enable strict mode and other strict compiler options to improve type safety.
+
+        **Tasks:**
+        - Set "strict": true in tsconfig.json.
+        - Enable relevant strict flags (e.g. noImplicitAny, strictNullChecks, strictPropertyInitialization, strictFunctionTypes).
+        - Address any resulting type errors.
