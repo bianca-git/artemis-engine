@@ -11,48 +11,39 @@ export async function POST(request: Request) {
   const { topic, stream = false } = await request.json();
 
   if (stream) {
-    const encoder = new TextEncoder();
+    try {
+      const streamResponse = await openaiClient.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: topic }],
+        stream: true,
+      });
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        const openai = new OpenAI();
-        const res = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [{ role: "user", content: topic }],
-          stream: true,
-        });
-
-        for await (const part of res) {
-          const text = part.choices?.[0].delta?.content;
-          if (text) controller.enqueue(encoder.encode(text));
-        }
-        controller.close();
-      },
-    });
-
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache",
-      },
-    });
+      return new Response(streamResponse.toReadableStream(), {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache, no-transform",
+          Connection: "keep-alive",
+        },
+      });
+    } catch (error) {
+      console.error("Streaming blog generation error:", error);
+      return NextResponse.json(
+        { error: "Failed to stream blog content." },
+        { status: 500 }
+      );
+    }
   }
 
   // Fallback to non-streaming logic (existing code)
   try {
-    const response = await openaiClient.responses.create({
-      prompt: {
-        id: "pmpt_688c4b3c1da88190bae98b455780bb1205afd50968eca7c0",
-        version: "9",
-        variables: {
-          title: topic?.TITLE || "",
-          content: topic?.CONTENT || "",
-        },
-      },
+    const prompt = `Title: ${topic?.TITLE}\n\nContent: ${topic?.CONTENT}`;
+    const response = await openaiClient.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
     });
 
     let portableTextContent: any[] = [];
-    let rawContent = response?.output_text || "";
+    let rawContent = response.choices[0]?.message?.content || "";
 
     // Convert Markdown to Portable Text
     portableTextContent = markdownToPortableText(rawContent, topic?.TITLE || "");
@@ -64,10 +55,13 @@ export async function POST(request: Request) {
     console.error("Blog generation error:", error);
 
     // Return a fallback response with empty but valid Portable Text structure
-    return NextResponse.json({
-      portableText: [],
-      error: "Failed to generate blog content. Please try again.",
-    });
+    return NextResponse.json(
+      {
+        portableText: [],
+        error: "Failed to generate blog content. Please try again.",
+      },
+      { status: 500 }
+    );
   }
 }
 
