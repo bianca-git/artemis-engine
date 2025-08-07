@@ -150,77 +150,105 @@ function markdownToPortableText(markdown: string, title: string) {
   return blocks;
 }
 
-// Helper to parse inline markdown for bold, italics, and bold-italics
-function parseInlineMarkdown(text: string) {
-  // This regex matches ***bolditalic***, **bold**, *italic*, and also handles _ and __ as markdown allows both
-  // It also supports combinations like _**Name, Lock, Communicate:**_
+// Helper to parse inline markdown for bold, italics, and bold-italics (Iterative)
+function parseInlineMarkdown(text: string): any[] {
+  const finalSpans: any[] = [];
+  // Use a queue for breadth-first processing to maintain order and avoid deep recursion.
+  const queue: { text: string; marks: string[] }[] = [{ text, marks: [] }];
+  let queueIndex = 0;
+
+  // The regex is kept from the original implementation.
   const regex = /(\*\*\*|___)(.*?)\1|(\*\*|__)(.*?)\3|(\*|_)(.*?)\5/g;
-  const spans: any[] = [];
-  let lastIndex = 0;
-  let match;
 
-  while ((match = regex.exec(text)) !== null) {
-    // Add text before the match
-    if (match.index > lastIndex) {
-      spans.push({
-        _type: "span",
-        _key: uuidv4(),
-        text: text.slice(lastIndex, match.index),
-        marks: [],
+  while (queueIndex < queue.length) {
+    const { text: currentText, marks: parentMarks } = queue[queueIndex];
+    queueIndex++;
+
+    let lastIndex = 0;
+    let hasMatches = false;
+    const segments = [];
+
+    // Use a new regex instance for each iteration of the text.
+    const localRegex = regex.lastIndex = 0;
+    let match;
+
+    while ((match = localRegex.exec(currentText)) !== null) {
+      hasMatches = true;
+      // 1. Add the text segment before the current match.
+      if (match.index > lastIndex) {
+        segments.push({
+          text: currentText.slice(lastIndex, match.index),
+          marks: parentMarks,
+          isLeaf: true, // This segment won't be processed further.
+        });
+      }
+
+      // 2. Determine the marks and content for the matched segment.
+      let content = "";
+      let newMarks: string[] = [];
+      if (match[1]) {
+        // ***bolditalic*** or ___bolditalic___
+        newMarks = ["strong", "em"];
+        content = match[2];
+      } else if (match[3]) {
+        // **bold** or __bold__
+        newMarks = ["strong"];
+        content = match[4];
+      } else if (match[5]) {
+        // *italic* or _italic_
+        newMarks = ["em"];
+        content = match[6];
+      }
+
+      // 3. Add the nested content to be processed further.
+      segments.push({
+        text: content,
+        marks: Array.from(new Set([...parentMarks, ...newMarks])),
+        isLeaf: false, // This segment will be pushed to the queue.
       });
+
+      lastIndex = localRegex.lastIndex;
     }
 
-    let markType: string[] = [];
-    let content = "";
+    // 4. If no matches were found in the current text, it's a final leaf node.
+    if (!hasMatches) {
+      if (currentText) {
+        finalSpans.push({
+          _type: "span",
+          _key: uuidv4(),
+          text: currentText,
+          marks: parentMarks,
+        });
+      }
+    } else {
+      // 5. Add any remaining text after the last match.
+      if (lastIndex < currentText.length) {
+        segments.push({
+          text: currentText.slice(lastIndex),
+          marks: parentMarks,
+          isLeaf: true,
+        });
+      }
 
-    if (match[1]) {
-      // ***bolditalic*** or ___bolditalic___
-      markType = ["strong", "em"];
-      content = match[2];
-    } else if (match[3]) {
-      // **bold** or __bold__
-      markType = ["strong"];
-      content = match[4];
-    } else if (match[5]) {
-      // *italic* or _italic_
-      markType = ["em"];
-      content = match[6];
-    }
-
-    // Recursively parse for nested marks (e.g., _**text**_)
-    const innerSpans =
-      content && regex.test(content)
-        ? parseInlineMarkdown(content)
-        : [
-            {
+      // 6. Process the collected segments.
+      for (const segment of segments) {
+        if (segment.isLeaf) {
+          // Leaf nodes are added directly to the final result.
+          if (segment.text) {
+            finalSpans.push({
               _type: "span",
               _key: uuidv4(),
-              text: content,
-              marks: markType,
-            },
-          ];
-
-    // If recursive, apply marks to all inner spans
-    if (Array.isArray(innerSpans)) {
-      innerSpans.forEach((span: any) => {
-        // Merge marks if not already present
-        span.marks = Array.from(new Set([...(span.marks || []), ...markType]));
-        spans.push(span);
-      });
+              text: segment.text,
+              marks: segment.marks,
+            });
+          }
+        } else {
+          // Non-leaf nodes are added to the queue for further processing.
+          queue.push({ text: segment.text, marks: segment.marks });
+        }
+      }
     }
-
-    lastIndex = regex.lastIndex;
   }
 
-  // Add any remaining text after the last match
-  if (lastIndex < text.length) {
-    spans.push({
-      _type: "span",
-      _key: uuidv4(),
-      text: text.slice(lastIndex),
-      marks: [],
-    });
-  }
-
-  return spans;
+  return finalSpans;
 }
