@@ -40,63 +40,37 @@ export function useArtemisContent() {
   };
 
   const generateBlogStreaming = async (
-    topic: Topic, 
-    onChunk: (content: string, portableText: any[]) => void,
-    onComplete: (content: string, portableText: any[]) => void,
-    onError: (error: string) => void
+    topic: string, 
+    onChunk: (chunk: string) => void,
+    onComplete: (fullText: string) => void,
+    onError: (err: string) => void
   ) => {
     try {
-      const response = await fetch('/api/generate-blog', {
+      const res = await fetch('/api/generate-blog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic, stream: true }),
       });
+      if (!res.body) throw new Error('No streaming body.');
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      if (!response.body) {
-        throw new Error('No response body');
-      }
-
-      const reader = response.body.getReader();
+      const reader = res.body.getReader();
       const decoder = new TextDecoder();
+      let done = false;
+      let accumulated = "";
 
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          
-          if (done) break;
-          
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.substring(6);
-              if (data.trim()) {
-                try {
-                  const parsed = JSON.parse(data);
-                  if (parsed.type === 'chunk') {
-                    onChunk(parsed.content, parsed.portableText);
-                  } else if (parsed.type === 'complete') {
-                    onComplete(parsed.content, parsed.portableText);
-                    return;
-                  }
-                } catch (e) {
-                  console.warn(`Failed to parse streaming data '${data}':`, e);
-                }
-              }
-            }
-          }
+      while (!done) {
+        const { value, done: rDone } = await reader.read();
+        done = rDone;
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          accumulated += chunk;
+          onChunk(chunk);
         }
-      } finally {
-        reader.releaseLock();
       }
-    } catch (error) {
-      console.error('Streaming error:', error);
-      onError(error instanceof Error ? error.message : 'Streaming failed');
+
+      onComplete(accumulated);
+    } catch (e: any) {
+      onError(e.message);
     }
   };
 

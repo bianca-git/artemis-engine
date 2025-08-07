@@ -136,42 +136,48 @@ function useArtemis() {
     }, [content, ui]);
 
     // Streaming Blog Generation
-    const generateBlogStreaming = useCallback(async (topic: Topic) => {
+    const generateBlogStreaming = useCallback(
+      async (topic: Topic) => {
         ui.setIsLoadingBlog(true);
         setIsStreamingBlog(true);
         setStreamingBlogContent("");
         setBlogContent("");
         setPortableTextContent([]);
-        
-        const handleChunk = (content: string, portableText: any[]) => {
-            setStreamingBlogContent(content);
-            setPortableTextContent(portableText);
+
+        const handleChunk = (chunk: string) => {
+          setStreamingBlogContent((prev) => prev + chunk);
         };
-        
-        const handleComplete = (content: string, portableText: any[]) => {
-            setBlogContent(content);
-            setPortableTextContent(portableText);
-            setIsStreamingBlog(false);
-            setStreamingBlogContent("");
-            setWorkflowState((prev) => ({ ...prev, blog: true }));
-            ui.setIsLoadingBlog(false);
+
+        const handleComplete = (fullText: string) => {
+          setBlogContent(fullText);
+          setIsStreamingBlog(false);
+          setStreamingBlogContent("");
+          setWorkflowState((prev) => ({ ...prev, blog: true }));
+          ui.setIsLoadingBlog(false);
         };
-        
+
         const handleError = (error: string) => {
-            console.error('Streaming blog generation error:', error);
-            setIsStreamingBlog(false);
-            setStreamingBlogContent("");
-            setBlogContent("");
-            setPortableTextContent([]);
-            ui.setIsLoadingBlog(false);
+          console.error("Streaming blog generation error:", error);
+          setIsStreamingBlog(false);
+          setStreamingBlogContent("");
+          setBlogContent("");
+          setPortableTextContent([]);
+          ui.setIsLoadingBlog(false);
         };
-        
+
         try {
-            await content.generateBlogStreaming(topic, handleChunk, handleComplete, handleError);
+          await content.generateBlogStreaming(
+            topic.title,
+            handleChunk,
+            handleComplete,
+            handleError
+          );
         } catch (e) {
-            handleError(e instanceof Error ? e.message : 'Unknown error');
+          handleError(e instanceof Error ? e.message : "Unknown error");
         }
-    }, [content, ui]);
+      },
+      [content, ui]
+    );
 
     // Example: Generate Visual
     const generateVisual = useCallback(async (prompt: string, scene: string, bodyLanguage: string) => {

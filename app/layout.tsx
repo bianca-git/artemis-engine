@@ -8,7 +8,6 @@ export const metadata = {
   icons: {
     icon: "/favicon.ico"
   },
-  viewport: "width=device-width, initial-scale=1",
   authors: [{ name: "Bianca Wilkinson" }],
   robots: { index: false, follow: false }
 };
@@ -32,3 +31,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 export const dynamic = "force-dynamic"; // Ensures the layout is always re-rendered
 export const revalidate = 0; // Disables static generation for this layout
+
+/**
+ * Provides viewport config using Next.js generateViewport API
+ */
+export function generateViewport() {
+  return { width: 'device-width', initialScale: 1 };
+}

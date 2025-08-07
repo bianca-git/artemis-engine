@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
-import { openaiClient } from '../../../utils/openaiClient';
-import { v4 as uuidv4 } from 'uuid';
-import { marked } from 'marked';
+import { NextResponse } from "next/server";
+import OpenAI from "openai";
+import { v4 as uuidv4 } from "uuid";
+import { marked } from "marked";
+import { openaiClient } from "utils/openaiClient";
 
 // Maximum length for heading detection in blog content
 const MAX_HEADING_LENGTH = 80;
@@ -10,48 +11,30 @@ export async function POST(request: Request) {
   const { topic, stream = false } = await request.json();
 
   if (stream) {
-    // Create a ReadableStream for streaming OpenAI response
+    const encoder = new TextEncoder();
+
     const stream = new ReadableStream({
       async start(controller) {
-        try {
-          // Call OpenAI with streaming enabled
-          const response = await openaiClient.responses.create({
-            prompt: {
-              id: "pmpt_688c4b3c1da88190bae98b455780bb1205afd50968eca7c0",
-              version: "9",
-              variables: {
-                title: topic?.TITLE || "",
-                content: topic?.CONTENT || ""
-              }
-            },
-            stream: true
-          });
+        const openai = new OpenAI();
+        const res = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: topic }],
+          stream: true,
+        });
 
-          // For OpenAI SDKs that return an async iterator:
-          for await (const chunk of response) {
-            // Use only properties that exist on ResponseStreamEvent/ResponseAudioDeltaEvent
-            // Adjust this line to match the actual structure of the streamed chunk
-            // Try to extract the streamed text from the chunk (adjust property as per SDK)
-            // Try to extract the streamed text from the chunk (adjust property as per SDK)
-            // For OpenAI SDKs, the streamed chunk may have a 'choices' property with delta.content
-            let text = '';
-            if (text) {
-              controller.enqueue(new TextEncoder().encode(text));
-            }
-          }
-          controller.close();
-        } catch (err) {
-          controller.enqueue(new TextEncoder().encode('\n[Stream error]\n'));
-          controller.close();
+        for await (const part of res) {
+          const text = part.choices?.[0].delta?.content;
+          if (text) controller.enqueue(encoder.encode(text));
         }
-      }
+        controller.close();
+      },
     });
 
-    return new NextResponse(stream, {
+    return new Response(stream, {
       headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Transfer-Encoding': 'chunked',
-      }
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache",
+      },
     });
   }
 
@@ -63,9 +46,9 @@ export async function POST(request: Request) {
         version: "9",
         variables: {
           title: topic?.TITLE || "",
-          content: topic?.CONTENT || ""
-        }
-      }
+          content: topic?.CONTENT || "",
+        },
+      },
     });
 
     let portableTextContent: any[] = [];
@@ -75,15 +58,15 @@ export async function POST(request: Request) {
     portableTextContent = markdownToPortableText(rawContent, topic?.TITLE || "");
 
     return NextResponse.json({
-      portableText: portableTextContent
+      portableText: portableTextContent,
     });
   } catch (error) {
-    console.error('Blog generation error:', error);
+    console.error("Blog generation error:", error);
 
     // Return a fallback response with empty but valid Portable Text structure
     return NextResponse.json({
       portableText: [],
-      error: 'Failed to generate blog content. Please try again.'
+      error: "Failed to generate blog content. Please try again.",
     });
   }
 }
@@ -96,52 +79,52 @@ function markdownToPortableText(markdown: string, title: string) {
   // Add title as h1 if provided
   if (title && title.trim()) {
     blocks.push({
-      _type: 'block',
+      _type: "block",
       _key: uuidv4(),
-      style: 'h1',
+      style: "h1",
       children: [
         {
-          _type: 'span',
+          _type: "span",
           _key: uuidv4(),
           text: title.trim(),
-          marks: []
-        }
-      ]
+          marks: [],
+        },
+      ],
     });
   }
 
   tokens.forEach((token, idx) => {
-    if (token.type === 'heading') {
+    if (token.type === "heading") {
       blocks.push({
-        _type: 'block',
+        _type: "block",
         _key: uuidv4(),
         style: `h${token.depth}`,
-        children: parseInlineMarkdown(token.text)
+        children: parseInlineMarkdown(token.text),
       });
-    } else if (token.type === 'paragraph') {
+    } else if (token.type === "paragraph") {
       blocks.push({
-        _type: 'block',
+        _type: "block",
         _key: uuidv4(),
-        style: 'normal',
-        children: parseInlineMarkdown(token.text)
+        style: "normal",
+        children: parseInlineMarkdown(token.text),
       });
-    } else if (token.type === 'list') {
+    } else if (token.type === "list") {
       token.items.forEach((item: any) => {
         blocks.push({
-          _type: 'block',
+          _type: "block",
           _key: uuidv4(),
-          style: 'normal',
-          listItem: token.ordered ? 'number' : 'bullet',
+          style: "normal",
+          listItem: token.ordered ? "number" : "bullet",
           level: 1,
-          children: parseInlineMarkdown(item.text)
+          children: parseInlineMarkdown(item.text),
         });
       });
-    } else if (token.type === 'blockquote') {
+    } else if (token.type === "blockquote") {
       blocks.push({
-        _type: 'block',
+        _type: "block",
         _key: uuidv4(),
-        style: 'blockquote',
-        children: parseInlineMarkdown(token.text)
+        style: "blockquote",
+        children: parseInlineMarkdown(token.text),
       });
     }
     // Add more token types as needed (code, hr, etc.)
@@ -150,17 +133,17 @@ function markdownToPortableText(markdown: string, title: string) {
   // If no blocks were created, add a default empty block
   if (blocks.length === 0) {
     blocks.push({
-      _type: 'block',
+      _type: "block",
       _key: uuidv4(),
-      style: 'normal',
+      style: "normal",
       children: [
         {
-          _type: 'span',
+          _type: "span",
           _key: uuidv4(),
-          text: 'No content generated. Please try again.',
-          marks: []
-        }
-      ]
+          text: "No content generated. Please try again.",
+          marks: [],
+        },
+      ],
     });
   }
 
@@ -180,36 +163,42 @@ function parseInlineMarkdown(text: string) {
     // Add text before the match
     if (match.index > lastIndex) {
       spans.push({
-        _type: 'span',
+        _type: "span",
         _key: uuidv4(),
         text: text.slice(lastIndex, match.index),
-        marks: []
+        marks: [],
       });
     }
 
     let markType: string[] = [];
-    let content = '';
+    let content = "";
 
-    if (match[1]) { // ***bolditalic*** or ___bolditalic___
-      markType = ['strong', 'em'];
+    if (match[1]) {
+      // ***bolditalic*** or ___bolditalic___
+      markType = ["strong", "em"];
       content = match[2];
-    } else if (match[3]) { // **bold** or __bold__
-      markType = ['strong'];
+    } else if (match[3]) {
+      // **bold** or __bold__
+      markType = ["strong"];
       content = match[4];
-    } else if (match[5]) { // *italic* or _italic_
-      markType = ['em'];
+    } else if (match[5]) {
+      // *italic* or _italic_
+      markType = ["em"];
       content = match[6];
     }
 
     // Recursively parse for nested marks (e.g., _**text**_)
-    const innerSpans = content && regex.test(content)
-      ? parseInlineMarkdown(content)
-      : [{
-          _type: 'span',
-          _key: uuidv4(),
-          text: content,
-          marks: markType
-        }];
+    const innerSpans =
+      content && regex.test(content)
+        ? parseInlineMarkdown(content)
+        : [
+            {
+              _type: "span",
+              _key: uuidv4(),
+              text: content,
+              marks: markType,
+            },
+          ];
 
     // If recursive, apply marks to all inner spans
     if (Array.isArray(innerSpans)) {
@@ -226,10 +215,10 @@ function parseInlineMarkdown(text: string) {
   // Add any remaining text after the last match
   if (lastIndex < text.length) {
     spans.push({
-      _type: 'span',
+      _type: "span",
       _key: uuidv4(),
       text: text.slice(lastIndex),
-      marks: []
+      marks: [],
     });
   }
 
