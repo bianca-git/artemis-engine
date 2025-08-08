@@ -29,10 +29,10 @@ const SEOStep = ({
             {isLoadingSeo && <div className="alert alert-info">Generating SEO...</div>}
             {seoData && (
               <div className="mockup bg-base-200 p-4 rounded-md border border-base-300">
-                <h1 className="prose prose-h1 card-title text-3xl font-bold mb-2 bg-cyan-100 p-4">
+                <h1 className="card-title text-3xl font-bold mb-2 bg-cyan-100 p-4">
                   {seoData.metaTitle || "SEO Meta Title"}
                 </h1>
-                <div className="prose prose-p mb-4 px-2 font-bg-semibold bg-cyan-50 rounded-md">
+                <div className="mb-4 px-2 font-semibold bg-cyan-50 rounded-md">
                   {seoData.metaDescription || "SEO Meta Description"}
                 </div>
                 {seoData.keywords && Array.isArray(seoData.keywords) && seoData.keywords.length > 0 && (

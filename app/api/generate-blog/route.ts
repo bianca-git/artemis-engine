@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       async start(controller) {
         try {
           const res = await openaiClient.responses.stream({
-            model: "gpt-5-nano",
+            model: "gpt-4o-mini",
             input: [
               {
                 role: "developer",
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
   // Fallback to non-streaming logic (existing code)
   try {
     const response = await openaiClient.responses.create({
-      model: "gpt-5-nano",
+      model: "gpt-4o-mini",
       input: [
         {
           role: "developer",

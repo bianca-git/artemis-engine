@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
   try {
     const response = await openaiClient.responses.create({
-      model: "gpt-5-nano",
+      model: "gpt-4o-mini",
       input: [
         {
           role: "developer",

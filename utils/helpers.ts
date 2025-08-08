@@ -112,23 +112,12 @@ const MIN_BOUNDARY_RATIO = 0.5;
 /**
  * Truncate text at word/sentence boundary to avoid cutting off mid-word
  */
-export const truncateAtBoundary = (text: string, maxLength: number): string => {
-  if (!text || text.length <= maxLength) return text;
-  
-  const truncated = text.substring(0, maxLength);
-  
-  // Find the last word boundary (space, period, or other punctuation)
-  const lastBoundary = Math.max(
-    truncated.lastIndexOf(' '),
-    truncated.lastIndexOf('.'),
-    truncated.lastIndexOf('!'),
-    truncated.lastIndexOf('?'),
-    truncated.lastIndexOf('\n')
-  );
-  
-  // If we found a boundary, use it; otherwise use the full truncated text
-  return lastBoundary > maxLength * MIN_BOUNDARY_RATIO ? truncated.substring(0, lastBoundary) : truncated;
-};
+export function truncateAtBoundary(text: string, max: number): string {
+  if (!text || text.length <= max) return text || '';
+  const slice = text.slice(0, max);
+  const lastBreak = Math.max(slice.lastIndexOf('\n'), slice.lastIndexOf('. '), slice.lastIndexOf(' '));
+  return (lastBreak > max * 0.6 ? slice.slice(0, lastBreak) : slice).trim();
+}
 
 /**
  * Convert Portable Text blocks to plain text for editing/copying

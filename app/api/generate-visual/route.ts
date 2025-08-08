@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { hasValidOpenAIKey } from '../../../utils/openaiClient';
 import { GoogleGenAI } from '@google/genai';
 
 /**
@@ -66,14 +65,37 @@ export async function POST(request: Request) {
     });
 
   } catch (err: any) {
-    const error = err?.message || String(err);
-    console.error('Image generation error:', error);
+    // Try to detect invalid API key and fall back to mock descriptions (avoid hard 500s in dev)
+    const serialized = typeof err === 'string' ? err : (() => {
+      try { return JSON.stringify(err); } catch { return String(err); }
+    })();
+    const isInvalidKey = serialized.includes('API_KEY_INVALID') || serialized.includes('API key not valid');
 
+    console.error('Image generation error:', serialized);
+
+    if (isInvalidKey) {
+      // Provide mock data to keep the UI flow working even with a bad key
+      return NextResponse.json({
+        descriptions: [
+          {
+            "Image Name": "Mock Visual (Invalid API Key)",
+            "Caption Plan": "Fallback caption because the provided Google AI API key is invalid.",
+            "Target Audience": "General audience",
+            "Keywords": ["mock", "visual", "content"],
+            "Platform": "Instagram"
+          }
+        ],
+        images: [],
+        prompt
+      });
+    }
+
+    // Unknown error: return a 500 but keep a consistent response shape
     return NextResponse.json({
       success: false,
       images: [],
       prompt,
-      error
+      error: typeof err?.message === 'string' ? err.message : 'Image generation failed'
     }, { status: 500 });
   }
 }

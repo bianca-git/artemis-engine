@@ -110,8 +110,8 @@ const VisualStep = React.memo(({
     // Support both old and new API shapes
     const images = visualDescriptions.images || [];
     const descriptions = visualDescriptions.descriptions || visualDescriptions;
-    // Always show the prompt (from API or fallback to activeTopic)
-    const prompt = visualDescriptions.prompt || activeTopic?.visuals || "";
+  // Always show the prompt (from API or fallback to activeTopic.VISUAL)
+  const prompt = visualDescriptions.prompt || activeTopic?.VISUAL || "";
 
     return (
       <>
@@ -144,7 +144,7 @@ const VisualStep = React.memo(({
         </div>
       </>
     );
-  }, [visualDescriptions, activeTopic?.visuals, imageScene, bodyLanguage]);
+  }, [visualDescriptions, activeTopic?.VISUAL, imageScene, bodyLanguage]);
 
   const stepContent = useMemo(() => (
     <>

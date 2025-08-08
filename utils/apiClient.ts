@@ -90,4 +90,21 @@ export class ApiClient {
 }
 
 // Singleton instance for the app
-export const apiClient = new ApiClient();
+export const apiClient = {
+  async post(path: string, body: any) {
+    try {
+      const res = await fetch(`/api${path.startsWith('/') ? path : `/${path}`}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body ?? {}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { success: false, error: data?.error || `Request failed: ${res.status}` };
+      }
+      return { success: true, data };
+    } catch (e: any) {
+      return { success: false, error: e?.message || 'Network error' };
+    }
+  },
+};

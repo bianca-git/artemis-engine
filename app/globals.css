@@ -2,10 +2,6 @@
 @import "tailwindcss";
 @plugin "daisyui" {
   themes: all;
-  root: ":root";
-  include: ;
-  exclude: ;
-  prefix: ;
   logs: true;
 }
 
@@ -20,9 +16,7 @@ body {
   background-color: #a0e7e5;
 }
 .rainbow-hover-btn:hover {
-  border: -5px solid #a0e7e5;
-}
-
-.rainbow-hover-btn:hover {
+  /* border width cannot be negative; keep a subtle effect */
+  border: 2px solid #a0e7e5;
   box-shadow: 0 0 5px #ff00cc, 0 0 6px #3333ff, 0 0 7px #00ffcc, 0 0 8px #ffff00, 0 0 9px #ff6600;
 }
