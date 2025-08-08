@@ -32,7 +32,13 @@ export function useArtemisContent() {
   };
 
   const generateBlog = async (topic: Topic) => {
-    const response = await apiClient.post('/generate-blog', { topic });
+    // Send only required fields to avoid oversized or non-serializable payloads
+    const response = await apiClient.post('/generate-blog', {
+      topic: {
+        TITLE: topic?.TITLE || "",
+        CONTENT: topic?.CONTENT || ""
+      }
+    });
     if (!response.success) {
       throw new Error(response.error || 'Failed to generate blog');
     }
@@ -40,7 +46,7 @@ export function useArtemisContent() {
   };
 
   const generateBlogStreaming = async (
-    topic: string, 
+    topic: Topic,
     onChunk: (chunk: string) => void,
     onComplete: (fullText: string) => void,
     onError: (err: string) => void
@@ -49,7 +55,13 @@ export function useArtemisContent() {
       const res = await fetch('/api/generate-blog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, stream: true }),
+        body: JSON.stringify({
+          topic: {
+            TITLE: topic?.TITLE || "",
+            CONTENT: topic?.CONTENT || ""
+          },
+          stream: true
+        }),
       });
       if (!res.body) throw new Error('No streaming body.');
 

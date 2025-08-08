@@ -19,7 +19,8 @@ const VisualStep = React.memo(({
 
   const publishVisualToSheets = useCallback(async (visualDescriptions: any[]) => {
     try {
-      const response = await apiClient.post("/publish-visual-sheets", { visualDescriptions });
+      // Server route expects { descriptions }
+      const response = await apiClient.post("/publish-visuals", { descriptions: visualDescriptions });
       if (response.success) {
         alert("Visual descriptions sent to Google Sheets!");
       } else {

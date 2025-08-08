@@ -25,6 +25,11 @@ const TopicWorkflowSection = React.memo(({
   setWorkflowState,
   handleLoadData,
   csvRefreshTimeout,
+  resetBlog,
+  resetSeo,
+  resetVisual,
+  resetSocial,
+  resetCms,
 }: any) => {
   // Memoize TopicAmplifier props to prevent unnecessary re-renders
   const topicAmplifierProps = useMemo(() => ({
@@ -56,7 +61,12 @@ const TopicWorkflowSection = React.memo(({
     selectTopic,
     workflowState,
     setWorkflowState,
-  }), [csvData, activeTopic, selectTopic, workflowState, setWorkflowState]);
+    resetBlog,
+    resetSeo,
+    resetVisual,
+    resetSocial,
+    resetCms,
+  }), [csvData, activeTopic, selectTopic, workflowState, setWorkflowState, resetBlog, resetSeo, resetVisual, resetSocial, resetCms]);
 
   return (
     <div className="space-y-8">

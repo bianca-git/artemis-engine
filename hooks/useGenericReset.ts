@@ -77,7 +77,13 @@ export function useWorkflowReset(
   }, [resetValues, setters, setWorkflowState]);
 
   return {
-    resetBlog: useCallback(() => resetStep('blog', ['blogContent', 'portableTextContent'], ['seo', 'visual', 'social', 'cms']), [resetStep]),
+    resetBlog: useCallback(() =>
+      resetStep(
+        'blog',
+        ['blogContent', 'portableTextContent', 'isStreamingBlog', 'streamingBlogContent'],
+        ['seo', 'visual', 'social', 'cms']
+      ),
+    [resetStep]),
     resetSeo: useCallback(() => resetStep('seo', ['seoData'], ['visual', 'social', 'cms']), [resetStep]),
     resetVisual: useCallback(() => resetStep('visual', ['imagePrompt', 'imageScene', 'bodyLanguage', 'visualDescriptions', 'selectedVisuals'], ['social', 'cms']), [resetStep]),
     resetSocial: useCallback(() => resetStep('social', ['socialPosts'], ['cms']), [resetStep]),

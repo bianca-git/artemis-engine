@@ -5,9 +5,9 @@ import React, { useCallback, useMemo } from "react";
  */
 const StepCard = React.memo(({ step, onReset }: any) => {
   const handleReset = useCallback(() => {
-    if (onReset) {
-      onReset();
-    }
+    if (!onReset) return;
+    const ok = window.confirm('Reset this step? This will clear its results and downstream steps.');
+    if (ok) onReset();
   }, [onReset]);
 
   const resetButton = useMemo(() => {

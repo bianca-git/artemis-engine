@@ -6,6 +6,11 @@ const SelectTopicSection = ({
   selectTopic,
   workflowState,
   setWorkflowState,
+  resetBlog,
+  resetSeo,
+  resetVisual,
+  resetSocial,
+  resetCms,
 }) => (
   <section>
     <div className="w-full mb-4">
@@ -26,9 +31,17 @@ const SelectTopicSection = ({
                   className="w-full flex items-center justify-between p-4 text-left focus:outline-none"
                   aria-expanded={isActive}
                   onClick={() => {
+                    const proceed = window.confirm('Selecting a new topic will clear generated Blog, SEO, Visuals, Social, and CMS progress. Continue?');
+                    if (!proceed) return;
+                    // Reset all steps
+                    resetCms?.();
+                    resetSocial?.();
+                    resetVisual?.();
+                    resetSeo?.();
+                    resetBlog?.();
+                    // Update topic selection and workflow state
                     selectTopic(topic);
-                    console.log("Selected topic:", topic);
-                    if (!workflowState.topic) setWorkflowState(prev => ({ ...prev, topic: true }));
+                    if (!workflowState.topic) setWorkflowState((prev: any) => ({ ...prev, topic: true }));
                   }}
                 >
                   <span className="font-bold text-lg text-neutral-400 flex items-center gap-2">

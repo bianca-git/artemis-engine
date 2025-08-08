@@ -165,13 +165,13 @@ function useArtemis() {
           ui.setIsLoadingBlog(false);
         };
 
-        try {
-          await content.generateBlogStreaming(
-            topic.title,
-            handleChunk,
-            handleComplete,
-            handleError
-          );
+                try {
+                                        await content.generateBlogStreaming(
+                                            topic,
+                                            handleChunk,
+                                            handleComplete,
+                                            handleError
+                                        );
         } catch (e) {
           handleError(e instanceof Error ? e.message : "Unknown error");
         }

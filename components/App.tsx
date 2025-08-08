@@ -34,6 +34,11 @@ const App = () => {
     setWorkflowState: artemis.setWorkflowState,
     handleLoadData: artemis.handleLoadData,
     csvRefreshTimeout,
+  resetBlog: artemis.resetBlog,
+  resetSeo: artemis.resetSeo,
+  resetVisual: artemis.resetVisual,
+  resetSocial: artemis.resetSocial,
+  resetCms: artemis.resetCms,
   }), [artemis, csvRefreshTimeout]);
 
   return (
