@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { hasValidOpenAIKey, openaiClient } from 'utils/openaiClient';
+import { normalizeAIOptions } from 'utils/aiConfig';
+import { checkRateLimit } from 'utils/rateLimit';
+import { logger } from 'utils/logger';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -9,6 +12,9 @@ import path from 'path';
 
 // Cache the developer prompt to avoid re-reading on every request
 let cachedPrompt: string | null = null;
+
+// Output guard
+const MAX_IDEAS_CHARS = 4000;
 
 async function getDeveloperPrompt() {
   if (cachedPrompt) return cachedPrompt;
@@ -27,7 +33,14 @@ async function getDeveloperPrompt() {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+  const body: { keyword?: string; model?: string; verbosity?: 'low'|'medium'|'high'; reasoningEffort?: 'minimal'|'low'|'medium'|'high'; maxChars?: number } = await request.json();
+
+    // Rate limit (per IP extracted from headers, fallback to anonymous)
+    const ip = (request.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'anon';
+    const rl = checkRateLimit(`amplify:${ip}`, 10, 60_000); // 10 req / minute
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Rate limit exceeded. Try later.' }, { status: 429 });
+    }
 
     // Input validation
     if (!body.keyword?.trim()) {
@@ -36,10 +49,11 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    const keyword = body.keyword.trim();
+  const keyword = body.keyword.trim();
+  const ai = normalizeAIOptions('amplify', { model: body.model, verbosity: body.verbosity, reasoningEffort: body.reasoningEffort });
 
     // Return mock data if no API key
-    const mockResponse = {
+  const mockResponse = {
       ideas: `Mock ideas for keyword: ${keyword}. Here are some creative topic suggestions based on your keyword.`
     };
 
@@ -49,8 +63,13 @@ export async function POST(request: Request) {
 
     try {
       const developerPrompt = await getDeveloperPrompt();
-      const response = await openaiClient.responses.create({
-        model: "gpt-5-nano",
+      // Map 'minimal' to 'low' for SDK types if SDK hasn't added 'minimal' yet
+      const reasoningParam = ai.reasoning?.effort === 'minimal'
+        ? { effort: 'low' as any }
+        : ai.reasoning;
+
+  const response = await openaiClient.responses.create({
+        model: ai.model,
         input: [
           {
             role: "developer",
@@ -71,29 +90,34 @@ export async function POST(request: Request) {
             ]
           }
         ],
-        text: {
-          format: { type: "text" }
-        },
-        reasoning: {
-          effort: "medium"
-        },
-        tools: [],
-        store: true
+        text: ai.text,
+  reasoning: reasoningParam as any,
+  tools: [],
+  store: false
       });
 
       console.log("Amplify response returned in route.ts");
 
+      let ideas = (response as any)?.output_text || mockResponse.ideas;
+      const cap = Math.min(Math.max(500, body.maxChars || MAX_IDEAS_CHARS), 20000);
+      if (ideas.length > cap) {
+        ideas = ideas.slice(0, cap) + '\n...[truncated]\n';
+      }
+      logger.info('amplify_topic_success', { ip, keywordLength: keyword.length, model: ai.model, verbosity: ai.text.verbosity || 'medium' });
       return NextResponse.json({
-        ideas: (response as any)?.output_text || mockResponse.ideas
+        model: ai.model,
+        verbosity: ai.text.verbosity || 'medium',
+        reasoningEffort: ai.reasoning?.effort || 'medium',
+        ideas
       });
 
     } catch (openaiError) {
-      console.error('OpenAI API error:', openaiError);
+      logger.error('amplify_topic_openai_error', { err: (openaiError as any)?.message || String(openaiError) });
       return NextResponse.json(mockResponse); // Return mock data on OpenAI error
     }
 
   } catch (error) {
-    console.error('Topic amplification error:', error);
+    logger.error('amplify_topic_route_error', { err: (error as any)?.message || String(error) });
     return NextResponse.json({
       error: 'Invalid request format'
     }, { status: 400 });

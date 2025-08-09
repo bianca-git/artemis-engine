@@ -102,7 +102,8 @@ const TopicAmplifier = React.memo(({
               Amplify
             </button>
           </div>
-          {isLoadingTopicIdeas && (
+          {/* Show loading alert only if a non-empty keyword was provided */}
+          {isLoadingTopicIdeas && topicKeyword.trim().length > 0 && (
             <div className="alert alert-info">Amplifying {topicKeyword}...</div>
           )}
           {topicIdeasList}

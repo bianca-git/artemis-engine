@@ -2,7 +2,6 @@
 "use client";
 import React, { useRef, useMemo } from "react";
 import useArtemis from "../hooks/useArtemis";
-import ThemeSwitcher from "./ThemeSwitcher";
 import TopicWorkflowSection from "./TopicWorkflowSection";
 import GenerationSteps from "./GenerationSteps";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -51,9 +50,7 @@ const App = () => {
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-widest uppercase bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-yellow-400 bg-clip-text text-transparent animate-gradient-x break-words">ARTEMIS</h1>
               </a>
             </div>
-            <div className="flex-none w-full sm:w-auto">
-              <ThemeSwitcher />
-            </div>
+            {/* ThemeSwitcher removed; theme now statically set to 'sunset' in root layout */}
           </div>
         </div>
         <main className="px-4 py-6 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 w-full max-w-7xl mx-auto">

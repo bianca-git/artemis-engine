@@ -5,13 +5,20 @@ import { GoogleGenAI } from '@google/genai';
  * Visual generation API using Google GenAI (Imagen 4.0 Ultra)
  */
 export async function POST(request: Request) {
-  const { prompt, scene, bodyLanguage } = await request.json();
+  const body = await request.json();
+  // Support legacy shape { prompt, scene, bodyLanguage } and new shape with location/pose or nested visual object
+  const visual = body.visual || {};
+  const prompt: string = body.prompt || visual.prompt || '';
+  const scene: string = body.scene || body.imageScene || '';
+  const bodyLanguage: string = body.bodyLanguage || body.body || '';
+  const location: string = body.location || visual.location || '';
+  const pose: string = body.pose || visual.pose || '';
 
   // Input validation
-  if (!prompt?.trim() || !scene?.trim() || !bodyLanguage?.trim()) {
+  if (!prompt?.trim()) {
     return NextResponse.json({
       success: false,
-      error: 'Missing required parameters: prompt, scene, and bodyLanguage are required'
+      error: 'Missing required parameter: prompt'
     }, { status: 400 });
   }
 
@@ -24,10 +31,16 @@ export async function POST(request: Request) {
           "Caption Plan": "Mock caption for visual content",
           "Target Audience": "General audience",
           "Keywords": ["mock", "visual", "content"],
-          "Platform": "Instagram"
+          "Platform": "Instagram",
+          size: { width: 2, height: 1 },
+          location, pose
         }
       ],
-      images: []
+      images: [],
+      prompt,
+      location,
+      pose,
+      size: { width: 2, height: 1 }
     });
   }
 
@@ -37,7 +50,14 @@ export async function POST(request: Request) {
     });
 
     // Compose a detailed prompt for the model
-    const fullPrompt = `Theme: ${prompt}\nScene: ${scene}\nBody Language: ${bodyLanguage}\nGenerate a visually engaging image for social media.`;
+    const fullPrompt = [
+      `Theme: ${prompt}`,
+      location ? `Location: ${location}` : null,
+      pose ? `Pose: ${pose}` : null,
+      scene ? `Scene: ${scene}` : null,
+      bodyLanguage ? `Body Language: ${bodyLanguage}` : null,
+      'Generate a visually engaging, cinematic, high-quality image. Maintain a 2:1 aspect ratio.'
+    ].filter(Boolean).join('\n');
 
     const response = await ai.models.generateImages({
       model: 'models/imagen-4.0-ultra-generate-preview-06-06',
@@ -45,7 +65,7 @@ export async function POST(request: Request) {
       config: {
         numberOfImages: 1,
         outputMimeType: 'image/jpeg',
-        aspectRatio: '16:9',
+        aspectRatio: '2:1',
       },
     });
 
@@ -62,6 +82,9 @@ export async function POST(request: Request) {
       success: true,
       images,
       prompt,
+      location,
+      pose,
+      size: { width: 2, height: 1 }
     });
 
   } catch (err: any) {
@@ -82,11 +105,16 @@ export async function POST(request: Request) {
             "Caption Plan": "Fallback caption because the provided Google AI API key is invalid.",
             "Target Audience": "General audience",
             "Keywords": ["mock", "visual", "content"],
-            "Platform": "Instagram"
+            "Platform": "Instagram",
+            size: { width: 2, height: 1 },
+            location, pose
           }
         ],
         images: [],
-        prompt
+        prompt,
+        location,
+        pose,
+        size: { width: 2, height: 1 }
       });
     }
 
@@ -95,6 +123,9 @@ export async function POST(request: Request) {
       success: false,
       images: [],
       prompt,
+      location,
+      pose,
+      size: { width: 2, height: 1 },
       error: typeof err?.message === 'string' ? err.message : 'Image generation failed'
     }, { status: 500 });
   }

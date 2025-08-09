@@ -2,10 +2,18 @@ import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { marked } from "marked";
 import { openaiClient } from "utils/openaiClient";
+import { normalizeAIOptions } from 'utils/aiConfig';
+import { checkRateLimit } from 'utils/rateLimit';
+import { logger } from 'utils/logger';
 import path from "path";
 import fs from "fs/promises";
 
-// Maximum length for heading detection in blog content
+// Memory / size safety guards (can be overridden per request)
+const DEFAULT_MAX_OUTPUT_CHARS = 20000; // legacy default
+const HARD_MAX_OUTPUT_CHARS = 60000;    // absolute safety ceiling to avoid runaway memory
+// Streaming buffer: give a bit of headroom above requested cap (will be computed dynamically)
+const STREAM_BUFFER = 1500;
+// Maximum length for heading detection in blog content (currently unused but kept for future logic)
 const MAX_HEADING_LENGTH = 80;
 
 // Cache the developer prompt to avoid re-reading on every request
@@ -28,57 +36,120 @@ async function getDeveloperPrompt() {
 
 
 export async function POST(request: Request) {
-  const { topic, stream = false } = await request.json();
+  const { topic, stream = false, model, verbosity, reasoningEffort, maxChars, full = false, includeRaw = false }: { topic: any; stream?: boolean; model?: string; verbosity?: 'low'|'medium'|'high'; reasoningEffort?: 'minimal'|'low'|'medium'|'high'; maxChars?: number; full?: boolean; includeRaw?: boolean } = await request.json();
+  const ip = (request.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'anon';
+  const rl = checkRateLimit(`blog:${ip}`, 5, 60_000); // 5 blog generations per minute
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Try later.' }, { status: 429 });
+  }
+  const ai = normalizeAIOptions('blog', { model, verbosity, reasoningEffort });
+
+  // Determine requested character cap
+  const requestedCap = (() => {
+    if (full) return HARD_MAX_OUTPUT_CHARS; // user explicitly wants the maximum allowed
+    if (maxChars && maxChars > 0) return Math.min(Math.max(2000, maxChars), HARD_MAX_OUTPUT_CHARS);
+    return DEFAULT_MAX_OUTPUT_CHARS;
+  })();
 
   if (stream) {
     const encoder = new TextEncoder();
 
-    const stream = new ReadableStream({
+    const rs = new ReadableStream({
       async start(controller) {
+        const abortController = new AbortController();
+        let total = 0;
+        let closed = false;
+        let bytesSent = 0;
+        const endSentinel = '\n[END]\n';
+        const streamCap = requestedCap + STREAM_BUFFER; // allow slight overflow for clean sentence completion
+        const safeEnqueue = (chunk: string) => {
+          if (closed) return;
+          if (!chunk) return;
+          total += chunk.length;
+          if (total > streamCap) {
+            controller.enqueue(encoder.encode('\n...[truncated]\n'));
+            controller.enqueue(encoder.encode(endSentinel));
+            closed = true;
+            abortController.abort();
+            controller.close();
+            return;
+          }
+          controller.enqueue(encoder.encode(chunk));
+          bytesSent += chunk.length;
+        };
         try {
           const developerPrompt = await getDeveloperPrompt();
+          const reasoningParam = ai.reasoning?.effort === 'minimal'
+            ? { effort: 'low' as any }
+            : ai.reasoning;
           const res = await openaiClient.responses.stream({
-            model: "gpt-4o-mini",
+            model: ai.model,
             input: [
-              {
-                role: "developer",
-                content: [
-                  {
-                    type: "input_text",
-                    text: developerPrompt
-                  }
-                ]
-              },
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "input_text",
-                    text: `Write a detailed blog post titled "${topic?.TITLE || ''}". Content: ${topic?.CONTENT || ''}.`
-                  }
-                ]
-              }
+              { role: "developer", content: [ { type: "input_text", text: developerPrompt } ] },
+              { role: "user", content: [ { type: "input_text", text: buildUserPrompt(topic, requestedCap, full) } ] }
             ],
-            text: { format: { type: "text" } },
-            reasoning: { effort: "high" },
+            text: ai.text,
             tools: [],
-            store: true
+            store: false,
+            signal: abortController.signal as any
           });
 
           for await (const event of res) {
-            if ((event as any).type === "response.output_text.delta") {
-              const delta = (event as any).delta as string;
-              if (delta) controller.enqueue(encoder.encode(delta));
+            const type = (event as any).type;
+            switch (type) {
+              case 'response.output_text.delta':
+                safeEnqueue((event as any).delta as string);
+                if (closed) break;
+                break;
+              case 'response.refusal.delta':
+              case 'response.refusal':
+                safeEnqueue('\n[refused]\n');
+                safeEnqueue(endSentinel);
+                closed = true;
+                abortController.abort();
+                break;
+              case 'response.completed':
+                safeEnqueue(endSentinel);
+                closed = true;
+                break;
+              case 'response.completed_with_error':
+              case 'response.error':
+                if (!bytesSent) {
+                  safeEnqueue('\n[error]\n');
+                }
+                safeEnqueue(endSentinel);
+                closed = true;
+                break;
+              case 'response.truncated':
+                safeEnqueue('\n[truncated]\n');
+                safeEnqueue(endSentinel);
+                closed = true;
+                break;
+              default:
+                // Ignore other event types silently (tool calls, reasoning tokens) for now
+                break;
             }
+            if (closed) break;
+          }
+          if (!closed) {
+            safeEnqueue(endSentinel);
+            closed = true;
           }
           controller.close();
-        } catch (err) {
-          controller.error(err);
+        } catch (err: any) {
+          if (!closed) {
+            if (!bytesSent) {
+              safeEnqueue('[stream-internal-error]\n');
+            }
+            safeEnqueue(endSentinel);
+            closed = true;
+            controller.close();
+          }
         }
-      },
+      }
     });
 
-    return new Response(stream, {
+    return new Response(rs, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "no-cache",
@@ -86,49 +157,46 @@ export async function POST(request: Request) {
     });
   }
 
-  // Fallback to non-streaming logic (existing code)
+  // Fallback to non-streaming logic (existing code, now enhanced)
   try {
       const developerPrompt = await getDeveloperPrompt();
+    const reasoningParam = ai.reasoning?.effort === 'minimal'
+      ? { effort: 'low' as any }
+      : ai.reasoning;
+    // Heuristic: approximate tokens ~ chars / 4
+    const maxOutputTokens = Math.min(8192, Math.ceil(requestedCap / 4));
     const response = await openaiClient.responses.create({
-      model: "gpt-4o-mini",
+      model: ai.model,
       input: [
         {
           role: "developer",
-          content: [
-            {
-              type: "input_text",
-              text: developerPrompt
-            }
-          ]
+          content: [ { type: "input_text", text: developerPrompt } ]
         },
         {
           role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: `Write a detailed blog post titled "${topic?.TITLE || ''}". Content: ${topic?.CONTENT || ''}.`
-            }
-          ]
+          content: [ { type: "input_text", text: buildUserPrompt(topic, requestedCap, full) } ]
         }
       ],
-      text: {
-        format: { type: "text" }
-      },
-      reasoning: {
-        effort: "high"
-      },
+  text: ai.text,
       tools: [],
-      store: true
+      store: false,
+      // Attempt to constrain token usage if supported
+      max_output_tokens: maxOutputTokens as any
     });
 
-    let portableTextContent: any[] = [];
     let rawContent = (response as any)?.output_text || "";
+    if (rawContent.length > requestedCap) {
+      rawContent = rawContent.slice(0, requestedCap) + "\n...[truncated]\n";
+    }
+    const portableTextContent = markdownToPortableText(rawContent, topic?.TITLE || "");
 
-    // Convert Markdown to Portable Text
-    portableTextContent = markdownToPortableText(rawContent, topic?.TITLE || "");
-
+    logger.info('generate_blog_success', { ip, model: ai.model, titleLen: (topic?.TITLE || '').length });
     return NextResponse.json({
+      model: ai.model,
+      verbosity: ai.text.verbosity || 'medium',
+      reasoningEffort: ai.reasoning?.effort || 'medium',
       portableText: portableTextContent,
+      ...(includeRaw ? { raw: rawContent } : {})
     });
   } catch (error) {
     console.error("Blog generation error:", error);
@@ -143,6 +211,11 @@ export async function POST(request: Request) {
 
 // Converts Markdown string to Portable Text blocks
 function markdownToPortableText(markdown: string, title: string) {
+  // Guard: extremely large markdown could blow memory; hard cap applied earlier but double check
+  if (markdown.length > HARD_MAX_OUTPUT_CHARS * 1.2) {
+    markdown = markdown.slice(0, HARD_MAX_OUTPUT_CHARS) + "\n...[truncated]\n";
+  }
+
   const tokens = marked.lexer(markdown);
   const blocks: any[] = [];
 
@@ -196,6 +269,13 @@ function markdownToPortableText(markdown: string, title: string) {
         style: "blockquote",
         children: parseInlineMarkdown(token.text),
       });
+    } else if (token.type === 'code') {
+      blocks.push({
+        _type: 'code',
+        _key: uuidv4(),
+        language: (token as any).lang || 'text',
+        code: (token as any).text || ''
+      });
     }
     // Add more token types as needed (code, hr, etc.)
   });
@@ -222,75 +302,49 @@ function markdownToPortableText(markdown: string, title: string) {
 
 // Helper to parse inline markdown for bold, italics, and bold-italics
 function parseInlineMarkdown(text: string) {
-  // This regex matches ***bolditalic***, **bold**, *italic*, and also handles _ and __ as markdown allows both
-  // It also supports combinations like _**Name, Lock, Communicate:**_
-  const regex = /(\*\*\*|___)(.*?)\1|(\*\*|__)(.*?)\3|(\*|_)(.*?)\5/g;
+  // Recreate regex each invocation to avoid lastIndex state leaks / memory retention
+  const pattern = /(\*\*\*|___)(.*?)\1|(\*\*|__)(.*?)\3|(\*|_)(.*?)\5/g;
   const spans: any[] = [];
   let lastIndex = 0;
-  let match;
-
-  while ((match = regex.exec(text)) !== null) {
-    // Add text before the match
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
     if (match.index > lastIndex) {
-      spans.push({
-        _type: "span",
-        _key: uuidv4(),
-        text: text.slice(lastIndex, match.index),
-        marks: [],
-      });
+      spans.push({ _type: "span", _key: uuidv4(), text: text.slice(lastIndex, match.index), marks: [] });
     }
-
     let markType: string[] = [];
     let content = "";
+    if (match[1]) { markType = ["strong", "em"]; content = match[2]; }
+    else if (match[3]) { markType = ["strong"]; content = match[4]; }
+    else if (match[5]) { markType = ["em"]; content = match[6]; }
 
-    if (match[1]) {
-      // ***bolditalic*** or ___bolditalic___
-      markType = ["strong", "em"];
-      content = match[2];
-    } else if (match[3]) {
-      // **bold** or __bold__
-      markType = ["strong"];
-      content = match[4];
-    } else if (match[5]) {
-      // *italic* or _italic_
-      markType = ["em"];
-      content = match[6];
+    if (content) {
+      // Do a shallow nested parse only once to avoid deep recursion on huge text
+      const nested = /(\*\*|__|\*|_)/.test(content) && content.length < 500 ? parseInlineMarkdown(content) : null;
+      if (nested) {
+        nested.forEach((s: any) => {
+          s.marks = Array.from(new Set([...(s.marks || []), ...markType]));
+          spans.push(s);
+        });
+      } else {
+        spans.push({ _type: "span", _key: uuidv4(), text: content, marks: markType });
+      }
     }
-
-    // Recursively parse for nested marks (e.g., _**text**_)
-    const innerSpans =
-      content && regex.test(content)
-        ? parseInlineMarkdown(content)
-        : [
-            {
-              _type: "span",
-              _key: uuidv4(),
-              text: content,
-              marks: markType,
-            },
-          ];
-
-    // If recursive, apply marks to all inner spans
-    if (Array.isArray(innerSpans)) {
-      innerSpans.forEach((span: any) => {
-        // Merge marks if not already present
-        span.marks = Array.from(new Set([...(span.marks || []), ...markType]));
-        spans.push(span);
-      });
-    }
-
-    lastIndex = regex.lastIndex;
+    lastIndex = pattern.lastIndex;
   }
-
-  // Add any remaining text after the last match
   if (lastIndex < text.length) {
-    spans.push({
-      _type: "span",
-      _key: uuidv4(),
-      text: text.slice(lastIndex),
-      marks: [],
-    });
+    spans.push({ _type: "span", _key: uuidv4(), text: text.slice(lastIndex), marks: [] });
   }
-
   return spans;
+}
+
+// Build user prompt based on requested cap / full flag
+function buildUserPrompt(topic: any, requestedCap: number, full: boolean) {
+  const title = topic?.TITLE || '';
+  const base = `Write a detailed, well-structured blog post titled "${title}" using the following context: ${topic?.CONTENT || ''}.`;
+  if (full) {
+    return base + ' Provide comprehensive coverage; do not artificially shorten. Aim for natural completeness.';
+  }
+  // Convert char cap to an approximate word target (chars / 5) for model guidance
+  const approxWords = Math.round(requestedCap / 5);
+  return base + ` Keep output under ${requestedCap} characters (approx ${approxWords} words) without cutting mid-sentence.`;
 }

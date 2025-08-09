@@ -86,12 +86,13 @@ export function useArtemisContent() {
     }
   };
 
-  const generateVisual = async (prompt: string, scene: string, bodyLanguage: string) => {
-    const response = await apiClient.post('/generate-visual', { prompt, scene, bodyLanguage });
+  const generateVisual = async (visual: { prompt: string; location?: string; pose?: string }, scene: string, bodyLanguage: string) => {
+    const payload: any = { prompt: visual.prompt, location: visual.location, pose: visual.pose, scene, bodyLanguage };
+    const response = await apiClient.post('/generate-visual', payload);
     if (!response.success) {
       throw new Error(response.error || 'Failed to generate visual descriptions');
     }
-    return response.data || { descriptions: [] };
+    return response.data || { descriptions: [], size: { width: 2, height: 1 } };
   };
 
   const generateSocial = async (blog: string) => {

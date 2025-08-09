@@ -20,3 +20,25 @@ body {
 /* Utility helpers for responsive truncation / wrapping */
 .break-words { word-wrap: break-word; overflow-wrap: anywhere; }
 
+/* Dark mode surface tweaks for generation/publish cards to reduce brightness */
+.gen-surface {
+  @apply bg-neutral-900/80 dark:bg-neutral-900 text-neutral-100 border border-neutral-700 backdrop-blur-sm;
+}
+.gen-surface header h3 { @apply text-neutral-100; }
+.gen-surface .btn-primary { @apply bg-indigo-600 hover:bg-indigo-500 text-white border-0; }
+.gen-surface input.input-bordered { @apply bg-neutral-800 text-neutral-100 placeholder-neutral-500 border-neutral-600 focus:border-indigo-500 focus:ring-0; }
+.gen-surface .mockup-code { @apply bg-neutral-800 border-neutral-700 text-neutral-200; }
+.gen-surface .alert-info { @apply bg-neutral-800 text-indigo-300 border border-neutral-700; }
+.gen-surface .alert-success { @apply bg-emerald-900 text-emerald-200 border border-emerald-700; }
+.publish-surface { @apply gen-surface; }
+
+/* Ensure badges/keywords adapt */
+.gen-surface .badge { @apply bg-neutral-700 text-neutral-200 border-neutral-600; }
+
+/* Light mode subtle reduction of brightness */
+@media (prefers-color-scheme: light) {
+  .gen-surface { @apply bg-neutral-50 border-neutral-200; }
+  .gen-surface input.input-bordered { @apply bg-white border-neutral-300 text-neutral-800; }
+  .gen-surface .mockup-code { @apply bg-neutral-100 border-neutral-200; }
+}
+

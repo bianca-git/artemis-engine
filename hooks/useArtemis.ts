@@ -180,11 +180,22 @@ function useArtemis() {
     );
 
     // Example: Generate Visual
-    const generateVisual = useCallback(async (prompt: string, scene: string, bodyLanguage: string) => {
+    const generateVisual = useCallback(async (visualSource: string | { prompt: string; location?: string; pose?: string }, scene: string, bodyLanguage: string) => {
         ui.setIsLoadingVisual(true);
         ui.setVisualLoadingMessage("Generating image descriptions...");
         try {
-            const dataResult = await content.generateVisual(prompt, scene, bodyLanguage) as { descriptions: VisualDescription[] };
+            let visualObj: { prompt: string; location?: string; pose?: string };
+            if (typeof visualSource === 'string') {
+                try {
+                    visualObj = JSON.parse(visualSource);
+                } catch {
+                    visualObj = { prompt: visualSource };
+                }
+            } else {
+                visualObj = visualSource;
+            }
+            if (!visualObj.prompt) visualObj.prompt = '';
+            const dataResult = await content.generateVisual(visualObj, scene, bodyLanguage) as any;
             setVisualDescriptions(dataResult.descriptions || []);
             setWorkflowState((prev) => ({ ...prev, visual: true }));
         } catch (e) {

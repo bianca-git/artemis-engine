@@ -1,6 +1,24 @@
 import React from "react";
 
-const SelectTopicSection = ({
+interface SelectTopicSectionProps {
+  csvData: any[];
+  activeTopic: any | null;
+  selectTopic: (t: any) => void;
+  workflowState: any;
+  setWorkflowState: (fn: (prev: any) => any) => void;
+  resetBlog?: () => void;
+  resetSeo?: () => void;
+  resetVisual?: () => void;
+  resetSocial?: () => void;
+  resetCms?: () => void;
+  hasGeneratedBlog?: boolean;
+  hasGeneratedSeo?: boolean;
+  hasGeneratedVisuals?: boolean;
+  hasGeneratedSocial?: boolean;
+  hasGeneratedCms?: boolean;
+}
+
+const SelectTopicSection: React.FC<SelectTopicSectionProps> = ({
   csvData,
   activeTopic,
   selectTopic,
@@ -11,6 +29,11 @@ const SelectTopicSection = ({
   resetVisual,
   resetSocial,
   resetCms,
+  hasGeneratedBlog,
+  hasGeneratedSeo,
+  hasGeneratedVisuals,
+  hasGeneratedSocial,
+  hasGeneratedCms,
 }) => (
   <section>
     <div className="w-full mb-4">
@@ -31,15 +54,20 @@ const SelectTopicSection = ({
                   className="w-full flex items-center justify-between p-4 text-left focus:outline-none"
                   aria-expanded={isActive}
                   onClick={() => {
-                    const proceed = window.confirm('Selecting a new topic will clear generated Blog, SEO, Visuals, Social, and CMS progress. Continue?');
-                    if (!proceed) return;
-                    // Reset all steps
-                    resetCms?.();
-                    resetSocial?.();
-                    resetVisual?.();
-                    resetSeo?.();
-                    resetBlog?.();
-                    // Update topic selection and workflow state
+                    const switching = activeTopic && activeTopic.ID !== topic.ID;
+                    const generated = !!(hasGeneratedBlog || hasGeneratedSeo || hasGeneratedVisuals || hasGeneratedSocial || hasGeneratedCms);
+                    if (switching && generated) {
+                      const proceed = window.confirm('Switching topics will clear existing generated content. Continue?');
+                      if (!proceed) return;
+                    }
+                    if (switching) {
+                      // Reset only when switching
+                      resetCms?.();
+                      resetSocial?.();
+                      resetVisual?.();
+                      resetSeo?.();
+                      resetBlog?.();
+                    }
                     selectTopic(topic);
                     if (!workflowState.topic) setWorkflowState((prev: any) => ({ ...prev, topic: true }));
                   }}

@@ -16,6 +16,29 @@ const VisualStep = React.memo(({
   // Free text fields for additional prompt context - moved to local state for better performance
   const [imageScene, setImageScene] = React.useState("");
   const [bodyLanguage, setBodyLanguage] = React.useState("");
+  const [prompt, setPrompt] = React.useState("");
+  const [location, setLocation] = React.useState("");
+  const [pose, setPose] = React.useState("");
+
+  // Parse VISUAL JSON whenever activeTopic changes
+  React.useEffect(() => {
+    if (activeTopic?.VISUAL) {
+      try {
+        const v = JSON.parse(activeTopic.VISUAL);
+        setPrompt(v.prompt || "");
+        setLocation(v.location || "");
+        setPose(v.pose || "");
+      } catch {
+        setPrompt(activeTopic.VISUAL);
+        setLocation("");
+        setPose("");
+      }
+    } else {
+      setPrompt("");
+      setLocation("");
+      setPose("");
+    }
+  }, [activeTopic?.VISUAL]);
 
   const publishVisualToSheets = useCallback(async (visualDescriptions: any[]) => {
     try {
@@ -32,13 +55,10 @@ const VisualStep = React.memo(({
   }, []);
 
   const handleGenerateVisual = useCallback(() => {
-    console.log('Generating visual with:', {
-      prompt: activeTopic?.VISUAL,
-      scene: imageScene,
-      bodyLanguage,
-    });
-    generateVisual(activeTopic?.VISUAL, imageScene, bodyLanguage);
-  }, [generateVisual, activeTopic?.VISUAL, imageScene, bodyLanguage]);
+    const visualObj = { prompt, location, pose };
+    console.log('Generating visual with:', { visualObj, scene: imageScene, bodyLanguage });
+    generateVisual(visualObj, imageScene, bodyLanguage);
+  }, [generateVisual, prompt, location, pose, imageScene, bodyLanguage]);
 
   const handleImageSceneChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setImageScene(e.target.value);
@@ -48,6 +68,10 @@ const VisualStep = React.memo(({
     setBodyLanguage(e.target.value);
   }, []);
 
+  const handlePromptChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setPrompt(e.target.value), []);
+  const handleLocationChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setLocation(e.target.value), []);
+  const handlePoseChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setPose(e.target.value), []);
+
   const handlePublishToSheets = useCallback(() => {
     publishVisualToSheets(visualDescriptions);
   }, [publishVisualToSheets, visualDescriptions]);
@@ -55,12 +79,35 @@ const VisualStep = React.memo(({
   const inputSection = useMemo(() => {
     const isDisabled =
       isLoadingVisual ||
-      !activeTopic?.VISUAL?.trim() ||
+  !prompt.trim() ||
       !imageScene.trim() ||
       !bodyLanguage.trim();
 
     return (
       <div className="flex flex-col gap-3 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <input
+            type="text"
+            className="input input-bordered"
+            placeholder="Prompt"
+            value={prompt}
+            onChange={handlePromptChange}
+          />
+          <input
+            type="text"
+            className="input input-bordered"
+            placeholder="Location"
+            value={location}
+            onChange={handleLocationChange}
+          />
+          <input
+            type="text"
+            className="input input-bordered"
+            placeholder="Pose"
+            value={pose}
+            onChange={handlePoseChange}
+          />
+        </div>
         <input
           type="text"
           className="input input-bordered"
@@ -82,7 +129,7 @@ const VisualStep = React.memo(({
         >
           Start Visual Generation
         </button>
-        {!activeTopic?.VISUAL?.trim() && (
+        {!prompt.trim() && (
           <div className="text-error text-sm mt-1">
             Please select a topic with a visual prompt before generating.
           </div>
@@ -96,7 +143,12 @@ const VisualStep = React.memo(({
     handleBodyLanguageChange,
     handleGenerateVisual,
     isLoadingVisual,
-    activeTopic?.VISUAL,
+    prompt,
+    location,
+    pose,
+    handlePromptChange,
+    handleLocationChange,
+    handlePoseChange,
   ]);
 
   const loadingSection = useMemo(() => {
@@ -108,10 +160,10 @@ const VisualStep = React.memo(({
     if (!visualDescriptions) return null;
 
     // Support both old and new API shapes
-    const images = visualDescriptions.images || [];
-    const descriptions = visualDescriptions.descriptions || visualDescriptions;
-  // Always show the prompt (from API or fallback to activeTopic.VISUAL)
-  const prompt = visualDescriptions.prompt || activeTopic?.VISUAL || "";
+  const images = visualDescriptions.images || [];
+  const descriptions = visualDescriptions.descriptions || visualDescriptions;
+  const apiPrompt = visualDescriptions.prompt || prompt;
+  const size = visualDescriptions.size || { width: 2, height: 1 };
 
     return (
       <>
@@ -132,10 +184,13 @@ const VisualStep = React.memo(({
           <pre>
 {JSON.stringify(
   {
-    prompt,
+    prompt: apiPrompt,
+    location,
+    pose,
     scene: imageScene,
     bodyLanguage,
     descriptions,
+    size,
   },
   null,
   2
@@ -144,7 +199,7 @@ const VisualStep = React.memo(({
         </div>
       </>
     );
-  }, [visualDescriptions, activeTopic?.VISUAL, imageScene, bodyLanguage]);
+  }, [visualDescriptions, prompt, location, pose, imageScene, bodyLanguage]);
 
   const stepContent = useMemo(() => (
     <>
