@@ -23,24 +23,20 @@ const BlogStep = React.memo(({
     [portableTextContent, blogContent]
   );
 
-  const blogButton = useMemo(() => {
-    if (hasContent) return null;
-    
-    return (
-      <div className="flex flex-col gap-2">
-        <button
-          className="btn btn-primary btn-block"
-          onClick={handleGenerateBlog}
-          disabled={isLoadingBlog}
-        >
-          GENERATE BLOG
-        </button>
-        {isLoadingBlog && (
-          <div className="alert alert-info">The Siren is contemplating...</div>
-        )}
-      </div>
-    );
-  }, [hasContent, handleGenerateBlog, isLoadingBlog]);
+  const blogButton = useMemo(() => (
+    <div className="flex flex-col gap-2">
+      <button
+        className="btn btn-primary btn-block"
+        onClick={handleGenerateBlog}
+        disabled={isLoadingBlog}
+      >
+        {hasContent ? 'REGENERATE BLOG' : 'GENERATE BLOG'}
+      </button>
+      {isLoadingBlog && (
+        <div className="alert alert-info">The Siren is contemplating...</div>
+      )}
+    </div>
+  ), [hasContent, handleGenerateBlog, isLoadingBlog]);
 
   const contentRenderer = useMemo(() => {
     if (portableTextContent?.length > 0) {
@@ -66,17 +62,11 @@ const BlogStep = React.memo(({
     title: "Generate Blog Post",
     isUnlocked: workflowState.topic,
     isComplete: workflowState.blog,
+    hintLocked: 'Select a topic first to unlock blog generation.',
     children: stepContent,
   }), [workflowState.topic, workflowState.blog, stepContent]);
 
-  return (
-  <section className="gen-surface rounded-xl">
-      <StepCard
-        onReset={resetBlog}
-        step={stepConfig}
-      />
-    </section>
-  );
+  return <StepCard onReset={resetBlog} step={stepConfig} />;
 });
 
 BlogStep.displayName = 'BlogStep';

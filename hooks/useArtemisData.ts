@@ -26,21 +26,11 @@ const PUBLIC_CSV_PATH = "/defaultData.csv"; // Adjust if you relocate the file (
 async function getCachedData() {
     if (cachedData) return cachedData;
     try {
-        if (typeof window === 'undefined') {
-            // Server environment: read from disk
-            const pathMod = await import('path');
-            const { promises: fsMod } = await import('fs');
-            // Reading from the original source location inside the repo
-            const filePath = pathMod.join(process.cwd(), 'hooks', 'defaultData.csv');
-            const raw = await fsMod.readFile(filePath, 'utf8');
-            cachedData = raw.trim();
-        } else {
-            // Client environment: fetch from public assets
-            const res = await fetch(PUBLIC_CSV_PATH, { cache: 'force-cache' });
-            if (!res.ok) throw new Error(`Failed to fetch ${PUBLIC_CSV_PATH}: ${res.status}`);
-            const text = await res.text();
-            cachedData = text.trim();
-        }
+        // Always read from public copy (canonical). Works for both server (fetch) & client.
+        const res = await fetch(PUBLIC_CSV_PATH, { cache: 'no-cache' });
+        if (!res.ok) throw new Error(`Failed to fetch ${PUBLIC_CSV_PATH}: ${res.status}`);
+        const text = await res.text();
+        cachedData = text.trim();
         return cachedData;
     } catch (err) {
         console.error('Failed to load defaultData.csv:', err);

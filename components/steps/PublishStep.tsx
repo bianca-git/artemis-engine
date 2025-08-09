@@ -12,13 +12,13 @@ const PublishStep = ({
   sanityAssetRef,
   resetCms,
 }) => (
-  <section className="publish-surface rounded-xl">
-    <StepCard
-      onReset={resetCms}
-      step={{
+  <StepCard
+    onReset={resetCms}
+    step={{
         title: "Publish to CMS",
         isUnlocked: workflowState.visual,
         isComplete: workflowState.cms,
+        hintLocked: 'Generate visuals to unlock publishing.',
         children: (
           <>
             {!cmsPayload && (
@@ -46,9 +46,8 @@ const PublishStep = ({
             )}
           </>
         ),
-      }}
-    />
-  </section>
+    }}
+  />
 );
 
 export default PublishStep;

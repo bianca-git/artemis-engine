@@ -4,6 +4,7 @@ import React, { useRef, useMemo } from "react";
 import useArtemis from "../hooks/useArtemis";
 import TopicWorkflowSection from "./TopicWorkflowSection";
 import GenerationSteps from "./GenerationSteps";
+import ProgressRail from "./ProgressRail";
 import { ErrorBoundary } from "./ErrorBoundary";
 
 
@@ -54,12 +55,13 @@ const App = () => {
           </div>
         </div>
         <main className="px-4 py-6 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 w-full max-w-7xl mx-auto">
-          <div className="lg:col-span-1 order-1">
+          <aside className="order-1 space-y-6 lg:col-span-1">
+            <ProgressRail workflowState={artemis.workflowState} />
             <TopicWorkflowSection {...topicWorkflowProps} />
-          </div>
-          <div className="lg:col-span-2 space-y-6 sm:space-y-8 order-2">
+          </aside>
+          <section className="order-2 space-y-6 sm:space-y-8 lg:col-span-2">
             <GenerationSteps {...artemis} />
-          </div>
+          </section>
         </main>
       </div>
     </ErrorBoundary>

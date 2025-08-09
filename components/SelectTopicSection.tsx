@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 
 interface SelectTopicSectionProps {
   csvData: any[];
@@ -34,13 +34,38 @@ const SelectTopicSection: React.FC<SelectTopicSectionProps> = ({
   hasGeneratedVisuals,
   hasGeneratedSocial,
   hasGeneratedCms,
-}) => (
+}) => {
+  const [filter, setFilter] = useState("");
+  const filtered = useMemo(() => {
+    if (!filter.trim()) return csvData;
+    const f = filter.toLowerCase();
+    return csvData.filter(t =>
+      (t.TITLE || "").toLowerCase().includes(f) ||
+      (t.CONTENT || "").toLowerCase().includes(f)
+    );
+  }, [csvData, filter]);
+
+  return (
   <section>
     <div className="w-full mb-4">
       <div className="mb-4">
         <h2 className="text-xl font-bold mb-2">Select Active Topic</h2>
-        <div className="w-full">
-          {csvData.map((topic, index) => {
+        <div className="mb-3 flex items-center gap-2">
+          <label htmlFor="topic-filter" className="text-xs font-semibold uppercase tracking-wide opacity-70">Filter</label>
+          <input
+            id="topic-filter"
+            type="text"
+            className="input input-bordered input-sm w-full"
+            placeholder="Search by title or content"
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+          />
+          {filter && (
+            <button type="button" className="btn btn-xs" onClick={() => setFilter("")}>Clear</button>
+          )}
+        </div>
+        <div className="w-full" role="listbox" aria-label="Topics list">
+          {filtered.map((topic, index) => {
             const isActive = activeTopic?.ID === topic.ID;
             // Ensure unique key by combining ID with index as fallback
             const uniqueKey = topic.ID && topic.ID.trim() ? topic.ID : `topic-${index}`;
@@ -88,10 +113,14 @@ const SelectTopicSection: React.FC<SelectTopicSectionProps> = ({
               </div>
             );
           })}
+          {filtered.length === 0 && (
+            <div className="text-sm opacity-60 italic">No topics match your filter.</div>
+          )}
         </div>
       </div>
     </div>
   </section>
-);
+  );
+};
 
 export default SelectTopicSection;

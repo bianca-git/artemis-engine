@@ -14,7 +14,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="sunset">
+  <html lang="en" data-theme="dark">
       <body className="bg-base-100 min-h-screen p-0 m-0 mx-auto">
         {/* Google Identity Services script */}
         <Script

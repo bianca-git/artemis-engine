@@ -25,8 +25,8 @@ const BlogSection: React.FC<BlogSectionProps> = ({
   const [viewMode, setViewMode] = React.useState<'preview' | 'edit'>('preview');
 
   return (
-    <div className="card bg-base-100 shadow-lg">
-      <div className="card-body">
+    <div className="card bg-base-100 shadow-lg step-card">
+      <div className="card-body step-card">
         <div className="flex items-center justify-between mb-4">
           <h3 className="card-title text-primary">Generated Blog Content</h3>
           <div className="flex gap-2">

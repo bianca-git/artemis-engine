@@ -25,6 +25,7 @@ export async function POST(request: Request) {
   // Return mock data if no API key
   if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json({
+      success: true,
       descriptions: [
         {
           "Image Name": "Mock Visual 1",
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
       prompt,
       location,
       pose,
+      rawPrompt: { prompt, location, pose },
       size: { width: 2, height: 1 }
     });
   }
@@ -84,6 +86,7 @@ export async function POST(request: Request) {
       prompt,
       location,
       pose,
+      rawPrompt: { prompt, location, pose },
       size: { width: 2, height: 1 }
     });
 
@@ -99,6 +102,7 @@ export async function POST(request: Request) {
     if (isInvalidKey) {
       // Provide mock data to keep the UI flow working even with a bad key
       return NextResponse.json({
+        success: true,
         descriptions: [
           {
             "Image Name": "Mock Visual (Invalid API Key)",
@@ -114,6 +118,7 @@ export async function POST(request: Request) {
         prompt,
         location,
         pose,
+        rawPrompt: { prompt, location, pose },
         size: { width: 2, height: 1 }
       });
     }
@@ -125,6 +130,7 @@ export async function POST(request: Request) {
       prompt,
       location,
       pose,
+      rawPrompt: { prompt, location, pose },
       size: { width: 2, height: 1 },
       error: typeof err?.message === 'string' ? err.message : 'Image generation failed'
     }, { status: 500 });

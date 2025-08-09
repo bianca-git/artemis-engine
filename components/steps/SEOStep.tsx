@@ -8,24 +8,22 @@ const SEOStep = ({
   activeTopic,
   resetSeo,
 }) => (
-  <section className="gen-surface rounded-xl">
-    <StepCard
-      onReset={resetSeo}
-      step={{
+  <StepCard
+    onReset={resetSeo}
+    step={{
         title: "Generate SEO",
         isUnlocked: workflowState.blog,
         isComplete: workflowState.seo,
+        hintLocked: 'Generate the blog post to derive SEO metadata.',
         children: (
           <>
-            {!seoData && (
-              <button
-                className="btn btn-primary btn-block"
-                onClick={() => generateSeo(activeTopic)}
-                disabled={isLoadingSeo}
-              >
-                GENERATE SEO
-              </button>
-            )}
+            <button
+              className="btn btn-primary btn-block"
+              onClick={() => generateSeo(activeTopic)}
+              disabled={isLoadingSeo}
+            >
+              {seoData ? 'REGENERATE SEO' : 'GENERATE SEO'}
+            </button>
             {isLoadingSeo && <div className="alert alert-info">Generating SEO...</div>}
             {seoData && (
               <div className="mockup bg-base-200 p-4 rounded-md border border-base-300">
@@ -57,9 +55,8 @@ const SEOStep = ({
             )}
           </>
         ),
-      }}
-    />
-  </section>
+    }}
+  />
 );
 
 export default SEOStep;

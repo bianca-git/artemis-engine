@@ -104,6 +104,34 @@ export async function POST(request: Request) {
         ideas = ideas.slice(0, cap) + '\n...[truncated]\n';
       }
       logger.info('amplify_topic_success', { ip, keywordLength: keyword.length, model: ai.model, verbosity: ai.text.verbosity || 'medium' });
+
+  // Persist ideas by overwriting public/defaultData.csv (single canonical copy used by client & server).
+  // We attempt a naive parse: split on newlines and wrap each idea as a CSV row.
+      try {
+        const ideasArray: string[] = Array.isArray(ideas)
+          ? ideas
+          : String(ideas)
+              .split(/\n+/)
+              .map(l => l.trim())
+              .filter(l => l.length > 0);
+
+        if (ideasArray.length > 0) {
+          // Build CSV with headers matching existing expectation
+          // ID,TITLE,CONTENT,VISUAL (VISUAL left blank for now)
+          const csvRows = ideasArray.map((idea, idx) => {
+            const safe = idea.replace(/"/g, '""');
+            return `generated-${Date.now()}-${idx},"${safe}","",""`;
+          });
+          const csv = `ID,TITLE,CONTENT,VISUAL\n${csvRows.join('\n')}`;
+
+          const root = process.cwd();
+          const publicCsvPath = path.join(root, 'public', 'defaultData.csv');
+          await fs.writeFile(publicCsvPath, csv, 'utf8');
+        }
+      } catch (persistErr) {
+        logger.error('amplify_topic_persist_error', { err: (persistErr as any)?.message || String(persistErr) });
+      }
+
       return NextResponse.json({
         model: ai.model,
         verbosity: ai.text.verbosity || 'medium',

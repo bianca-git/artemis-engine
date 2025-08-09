@@ -77,14 +77,12 @@ const VisualStep = React.memo(({
   }, [publishVisualToSheets, visualDescriptions]);
 
   const inputSection = useMemo(() => {
-    const isDisabled =
-      isLoadingVisual ||
-  !prompt.trim() ||
-      !imageScene.trim() ||
-      !bodyLanguage.trim();
+    // Determine if we have existing results to toggle button label
+    const hasVisuals = !!(visualDescriptions && ((visualDescriptions.images && visualDescriptions.images.length) || (Array.isArray(visualDescriptions.descriptions) && visualDescriptions.descriptions.length)));
+    const isDisabled = isLoadingVisual || !prompt.trim();
 
     return (
-      <div className="flex flex-col gap-3 mb-4">
+      <div className="flex flex-col gap-4 mb-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <input
             type="text"
@@ -96,45 +94,51 @@ const VisualStep = React.memo(({
           <input
             type="text"
             className="input input-bordered"
-            placeholder="Location"
+            placeholder="Location (optional)"
             value={location}
             onChange={handleLocationChange}
           />
           <input
             type="text"
             className="input input-bordered"
-            placeholder="Pose"
+            placeholder="Pose (optional)"
             value={pose}
             onChange={handlePoseChange}
           />
         </div>
-        <input
-          type="text"
-          className="input input-bordered"
-          placeholder="Image Scene (free text)"
-          value={imageScene}
-          onChange={handleImageSceneChange}
-        />
-        <input
-          type="text"
-          className="input input-bordered"
-          placeholder="Body Language (free text)"
-          value={bodyLanguage}
-          onChange={handleBodyLanguageChange}
-        />
+        <details className="bg-base-200 rounded-md border border-base-300 p-3">
+          <summary className="cursor-pointer text-sm font-semibold">Advanced Context</summary>
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input
+              type="text"
+              className="input input-bordered"
+              placeholder="Scene"
+              value={imageScene}
+              onChange={handleImageSceneChange}
+            />
+            <input
+              type="text"
+              className="input input-bordered"
+              placeholder="Body Language"
+              value={bodyLanguage}
+              onChange={handleBodyLanguageChange}
+            />
+          </div>
+        </details>
         <button
           className="btn btn-primary btn-block"
           onClick={handleGenerateVisual}
           disabled={isDisabled}
         >
-          Start Visual Generation
+          {hasVisuals ? 'REGENERATE VISUALS' : 'GENERATE VISUALS'}
         </button>
         {!prompt.trim() && (
           <div className="text-error text-sm mt-1">
             Please select a topic with a visual prompt before generating.
           </div>
         )}
-      </div>);
+      </div>
+    );
   }, [
     visualDescriptions,
     imageScene,
@@ -158,72 +162,71 @@ const VisualStep = React.memo(({
 
   const resultsSection = useMemo(() => {
     if (!visualDescriptions) return null;
+    const images = visualDescriptions.images || [];
+    const descriptions = visualDescriptions.descriptions || visualDescriptions;
+    const apiPrompt = visualDescriptions.prompt || prompt;
+    const size = visualDescriptions.size || { width: 2, height: 1 };
+    const summary = `${Array.isArray(descriptions) ? descriptions.length : 0} desc • ${apiPrompt?.length || 0} chars prompt`;
+    return { images, descriptions, apiPrompt, size, summary };
+  }, [visualDescriptions, prompt, location, pose, imageScene, bodyLanguage]);
 
-    // Support both old and new API shapes
-  const images = visualDescriptions.images || [];
-  const descriptions = visualDescriptions.descriptions || visualDescriptions;
-  const apiPrompt = visualDescriptions.prompt || prompt;
-  const size = visualDescriptions.size || { width: 2, height: 1 };
+  const [showRaw, setShowRaw] = React.useState(false);
 
+  const resultsRender = useMemo(() => {
+    if (!resultsSection) return null;
+    const { images, descriptions, apiPrompt, size, summary } = resultsSection as any;
     return (
-      <>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between text-sm opacity-80">
+          <span className="font-mono">{summary}</span>
+          <button type="button" className="btn btn-xs" onClick={() => setShowRaw(r => !r)}>
+            {showRaw ? 'Hide Raw JSON' : 'Show Raw JSON'}
+          </button>
+        </div>
         {images.length > 0 && (
-          <div className="flex flex-wrap gap-4 mb-4">
+          <div className="flex flex-wrap gap-4">
             {images.map((img: string, idx: number) => (
-              <img
-                key={idx}
-                src={img}
-                alt={`Generated Visual ${idx + 1}`}
-                className="rounded-lg border border-base-300 max-w-full h-auto shadow"
-                style={{ maxHeight: 320 }}
-              />
+              <figure key={idx} className="flex flex-col gap-1">
+                <img
+                  src={img}
+                  alt={`Generated Visual ${idx + 1}`}
+                  className="rounded-lg border border-base-300 max-w-full h-auto shadow"
+                  style={{ maxHeight: 320 }}
+                />
+                <figcaption className="text-[10px] uppercase tracking-wide opacity-60 text-center">#{idx + 1}</figcaption>
+              </figure>
             ))}
           </div>
         )}
-        <div className="mockup-code bg-base-200 p-4 rounded-md border border-base-300 mb-4">
-          <pre>
-{JSON.stringify(
-  {
-    prompt: apiPrompt,
-    location,
-    pose,
-    scene: imageScene,
-    bodyLanguage,
-    descriptions,
-    size,
-  },
-  null,
-  2
-)}
-          </pre>
-        </div>
-      </>
+        {showRaw && (
+          <details open className="bg-base-200 rounded-md border border-base-300">
+            <summary className="cursor-pointer px-4 py-2 text-sm font-semibold">Raw Visual Prompt</summary>
+            <div className="mockup-code bg-base-200 p-4 rounded-b-md border-t border-base-300 overflow-x-auto">
+              <pre className="text-xs">{JSON.stringify({ prompt: apiPrompt, location, pose }, null, 2)}</pre>
+            </div>
+          </details>
+        )}
+      </div>
     );
-  }, [visualDescriptions, prompt, location, pose, imageScene, bodyLanguage]);
+  }, [resultsSection, showRaw, location, pose, imageScene, bodyLanguage]);
 
   const stepContent = useMemo(() => (
     <>
       {inputSection}
       {loadingSection}
-      {resultsSection}
+    {resultsRender}
     </>
-  ), [inputSection, loadingSection, resultsSection]);
+  ), [inputSection, loadingSection, resultsRender]);
 
   const stepConfig = useMemo(() => ({
     title: "Generate Visual",
     isUnlocked: workflowState.seo,
     isComplete: workflowState.visual,
+    hintLocked: 'Generate SEO first to refine visual context.',
     children: stepContent,
   }), [workflowState.seo, workflowState.visual, stepContent]);
 
-  return (
-  <section className="gen-surface rounded-xl">
-      <StepCard
-        onReset={resetVisual}
-        step={stepConfig}
-      />
-    </section>
-  );
+  return <StepCard onReset={resetVisual} step={stepConfig} />;
 });
 
 VisualStep.displayName = 'VisualStep';
