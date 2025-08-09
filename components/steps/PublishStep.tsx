@@ -12,7 +12,7 @@ const PublishStep = ({
   sanityAssetRef,
   resetCms,
 }) => (
-  <section>
+  <section className="publish-surface rounded-xl">
     <StepCard
       onReset={resetCms}
       step={{

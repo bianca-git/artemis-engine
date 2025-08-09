@@ -21,24 +21,60 @@ body {
 .break-words { word-wrap: break-word; overflow-wrap: anywhere; }
 
 /* Dark mode surface tweaks for generation/publish cards to reduce brightness */
-.gen-surface {
-  @apply bg-neutral-900/80 dark:bg-neutral-900 text-neutral-100 border border-neutral-700 backdrop-blur-sm;
+.gen-surface, .publish-surface {
+  background-color: rgba(23,23,23,0.85);
+  color: #f5f5f5;
+  border: 1px solid #404040;
+  backdrop-filter: blur(4px);
 }
-.gen-surface header h3 { @apply text-neutral-100; }
-.gen-surface .btn-primary { @apply bg-indigo-600 hover:bg-indigo-500 text-white border-0; }
-.gen-surface input.input-bordered { @apply bg-neutral-800 text-neutral-100 placeholder-neutral-500 border-neutral-600 focus:border-indigo-500 focus:ring-0; }
-.gen-surface .mockup-code { @apply bg-neutral-800 border-neutral-700 text-neutral-200; }
-.gen-surface .alert-info { @apply bg-neutral-800 text-indigo-300 border border-neutral-700; }
-.gen-surface .alert-success { @apply bg-emerald-900 text-emerald-200 border border-emerald-700; }
-.publish-surface { @apply gen-surface; }
-
-/* Ensure badges/keywords adapt */
-.gen-surface .badge { @apply bg-neutral-700 text-neutral-200 border-neutral-600; }
-
-/* Light mode subtle reduction of brightness */
+.gen-surface header h3, .publish-surface header h3 { color: #fafafa; }
+.gen-surface .btn-primary, .publish-surface .btn-primary {
+  background-color: #4f46e5;
+  color: #fff;
+  border: 0;
+}
+.gen-surface .btn-primary:hover, .publish-surface .btn-primary:hover { background-color: #6366f1; }
+.gen-surface input.input-bordered, .publish-surface input.input-bordered {
+  background-color: #1f1f1f;
+  color: #f0f0f0;
+  border: 1px solid #525252;
+}
+.gen-surface input.input-bordered::placeholder, .publish-surface input.input-bordered::placeholder { color: #737373; }
+.gen-surface .mockup-code, .publish-surface .mockup-code {
+  background-color: #1e1e1e;
+  border: 1px solid #404040;
+  color: #e5e5e5;
+}
+.gen-surface .alert-info, .publish-surface .alert-info {
+  background-color: #1e1e1e;
+  color: #a5b4fc;
+  border: 1px solid #404040;
+}
+.gen-surface .alert-success, .publish-surface .alert-success {
+  background-color: #064e3b;
+  color: #d1fae5;
+  border: 1px solid #065f46;
+}
+.gen-surface .badge, .publish-surface .badge {
+  background-color: #3f3f46;
+  color: #e4e4e7;
+  border: 1px solid #52525b;
+}
 @media (prefers-color-scheme: light) {
-  .gen-surface { @apply bg-neutral-50 border-neutral-200; }
-  .gen-surface input.input-bordered { @apply bg-white border-neutral-300 text-neutral-800; }
-  .gen-surface .mockup-code { @apply bg-neutral-100 border-neutral-200; }
+  .gen-surface, .publish-surface {
+    background-color: #fafafa;
+    color: #111827;
+    border: 1px solid #e5e7eb;
+  }
+  .gen-surface input.input-bordered, .publish-surface input.input-bordered {
+    background-color: #ffffff;
+    color: #111827;
+    border: 1px solid #d1d5db;
+  }
+  .gen-surface .mockup-code, .publish-surface .mockup-code {
+    background-color: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    color: #1f2937;
+  }
 }
 

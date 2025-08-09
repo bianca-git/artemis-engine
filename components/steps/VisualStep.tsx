@@ -217,7 +217,7 @@ const VisualStep = React.memo(({
   }), [workflowState.seo, workflowState.visual, stepContent]);
 
   return (
-    <section>
+  <section className="gen-surface rounded-xl">
       <StepCard
         onReset={resetVisual}
         step={stepConfig}

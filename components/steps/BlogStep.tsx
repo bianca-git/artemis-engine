@@ -70,7 +70,7 @@ const BlogStep = React.memo(({
   }), [workflowState.topic, workflowState.blog, stepContent]);
 
   return (
-    <section>
+  <section className="gen-surface rounded-xl">
       <StepCard
         onReset={resetBlog}
         step={stepConfig}

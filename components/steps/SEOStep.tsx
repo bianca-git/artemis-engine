@@ -8,7 +8,7 @@ const SEOStep = ({
   activeTopic,
   resetSeo,
 }) => (
-  <section>
+  <section className="gen-surface rounded-xl">
     <StepCard
       onReset={resetSeo}
       step={{
