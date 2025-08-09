@@ -86,8 +86,17 @@ export function useArtemisContent() {
     }
   };
 
-  const generateVisual = async (visual: { prompt: string; location?: string; pose?: string }, scene: string, bodyLanguage: string) => {
-    const payload: any = { prompt: visual.prompt, location: visual.location, pose: visual.pose, scene, bodyLanguage };
+  const generateVisual = async (visual: { prompt: string; aspectRatio?: string; sampleCount?: number; outputMimeType?: string; personGeneration?: string }, _scene?: string, _bodyLanguage?: string) => {
+    // Construct EXACT shape expected by server / external API.
+    const payload = {
+      instances: [ { prompt: visual.prompt } ],
+      parameters: {
+        outputMimeType: visual.outputMimeType || 'image/png',
+        sampleCount: visual.sampleCount ?? 1,
+        personGeneration: visual.personGeneration || 'ALLOW_ADULT',
+        aspectRatio: (visual.aspectRatio || '16:9').replace('x', ':')
+      }
+    } as const;
     const response = await apiClient.post('/generate-visual', payload);
     if (!response.success) {
       throw new Error(response.error || 'Failed to generate visual descriptions');

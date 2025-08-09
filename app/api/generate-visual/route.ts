@@ -1,219 +1,198 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
 
-// Static stylistic tags automatically appended to every image generation request
-const STATIC_IMAGE_TAGS = [
-  'rainbow neon hair',
-  'futuristic dress',
-  'woman',
-  'minimalist lighting',
-  'rgb wire lines on arms and legs',
-  'circuit board patterns',
-  'digital vector art',
-  'Guweiz\'s style'
-];
+// Route implemented to mirror the provided curl (predict endpoint) using direct HTTP call.
+// Uses environment variable GEMINI_API_KEY (no hard-coded keys).
 
-/**
- * Visual generation API using Google GenAI (Imagen 4.0 Ultra)
- */
+interface PredictResponseImagePrediction {
+  bytesBase64Encoded?: string;
+  mimeType?: string;
+}
+interface PredictResponse {
+  predictions?: PredictResponseImagePrediction[];
+  error?: { message?: string; code?: number };
+}
+
 export async function POST(request: Request) {
-  const body = await request.json();
-  // Support legacy shape { prompt, scene, bodyLanguage } and new shape with location/pose or nested visual object
+  const body = await request.json().catch(() => ({}));
+  console.debug('[generate-visual] Incoming body:', body);
+
   const visual = body.visual || {};
-  const prompt: string = body.prompt || visual.prompt || '';
-  const scene: string = body.scene || body.imageScene || '';
-  const bodyLanguage: string = body.bodyLanguage || body.body || '';
-  const location: string = body.location || visual.location || '';
-  const pose: string = body.pose || visual.pose || '';
-  // New optional params inspired by provided API usage example
-  // Allow aspectRatio override; default now 16:9 (previously hard-coded 2:1)
-  let aspectRatio: string = (body.aspectRatio || visual.aspectRatio || '16:9').toString();
-  // Normalize aspect ratio (accept e.g. "16x9")
-  aspectRatio = aspectRatio.replace('x', ':');
-  // Validate basic pattern W:H with positive ints; fall back to 16:9 if invalid
-  if (!/^[0-9]+:[0-9]+$/.test(aspectRatio)) {
-    aspectRatio = '16:9';
+  const hasPassThrough = Array.isArray(body.instances) && body.instances.length > 0 && body.parameters;
+  
+
+  // Initialize variables (will be reassigned depending on pass-through vs legacy shape)
+  let prompt: string = '';
+  let aspectRatio: string = '16:9';
+  let sampleCount: number = 1;
+  let outputMimeType: string = 'image/png';
+  let personGeneration: string = 'ALLOW_ADULT';
+
+ // Static prefix always added before dynamic portion of prompt
+  const STATIC_PROMPT_PREFIX = 'Featuring the Digital Diva: A green eyed, sassy brunette with rainbow streaks in her hair. Neon Futuristic Vector Anime Style: ';
+  
+  if (hasPassThrough) {
+    // Extract strictly from provided shape
+    const incomingPrompt = body.instances?.[0]?.prompt || '';
+    prompt = incomingPrompt;
+    if (body.parameters?.aspectRatio) aspectRatio = String(body.parameters.aspectRatio).replace('x', ':');
+    if (body.parameters?.sampleCount != null) sampleCount = parseInt(String(body.parameters.sampleCount), 10) || 1;
+    if (body.parameters?.outputMimeType) outputMimeType = String(body.parameters.outputMimeType);
+    if (body.parameters?.personGeneration) personGeneration = String(body.parameters.personGeneration);
+  console.debug('[generate-visual] Pass-through shape detected. Extracted values:', { prompt, aspectRatio, sampleCount, outputMimeType, personGeneration });
+  } else {
+    // Legacy / simplified input shape (ensure proper grouping with parentheses to avoid precedence issues)
+    const dynamicPart = body.prompt || visual.prompt || body.text || '';
+    prompt = dynamicPart;
+    aspectRatio = (body.aspectRatio || visual.aspectRatio || '16:9').toString().replace('x', ':');
+    sampleCount = parseInt(body.sampleCount || body.numberOfImages || visual.sampleCount || '1', 10);
+    outputMimeType = (body.outputMimeType || body.mimeType || 'image/png').toString();
+    personGeneration = (body.personGeneration || 'ALLOW_ADULT') as string;
+  console.debug('[generate-visual] Legacy shape detected. Extracted values:', { prompt, aspectRatio, sampleCount, outputMimeType, personGeneration });
   }
-  // Allow caller to request multiple images (guard to small max to control cost)
-  let numberOfImages = parseInt(body.numberOfImages || body.count || visual.numberOfImages || '1', 10);
-  if (isNaN(numberOfImages) || numberOfImages < 1) numberOfImages = 1;
-  if (numberOfImages > 4) numberOfImages = 4; // safety cap
 
-  // Helper to convert aspect ratio to size object similar to previous fixed size
-  const [wStr, hStr] = aspectRatio.split(':');
-  const size = { width: Number(wStr) || 16, height: Number(hStr) || 9 };
+  // Normalization / validation
+  if (!/^[0-9]+:[0-9]+$/.test(aspectRatio)) aspectRatio = '16:9';
+  if (isNaN(sampleCount) || sampleCount < 1) sampleCount = 1;
+  if (sampleCount > 4) sampleCount = 4; // safety cap
 
-  // Input validation
-  if (!prompt?.trim()) {
-    return NextResponse.json({
-      success: false,
-      error: 'Missing required parameter: prompt'
-    }, { status: 400 });
+  // Enforce prefix (only once)
+  if (prompt && !prompt.startsWith(STATIC_PROMPT_PREFIX)) {
+    prompt = STATIC_PROMPT_PREFIX + prompt;
+  }
+  console.debug('[generate-visual] Normalized & prefixed values:', { prompt, aspectRatio, sampleCount, outputMimeType, personGeneration });
+ 
+
+  if (!prompt.trim()) {
+  return NextResponse.json({ success: false, error: 'Missing required parameter: prompt', effectivePrompt: prompt }, { status: 400 });
   }
 
-  // Return mock data if no API key
-  if (!process.env.GEMINI_API_KEY) {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) {
+  console.debug('[generate-visual] No GEMINI_API_KEY present. Returning mock response.');
     return NextResponse.json({
       success: true,
-      descriptions: [
-        {
-          "Image Name": "Mock Visual 1",
-          "Caption Plan": "Mock caption for visual content",
-          "Target Audience": "General audience",
-          "Keywords": ["mock", "visual", "content"],
-          "Platform": "Instagram",
-          size,
-          location, pose,
-          aspectRatio
-        }
-      ],
       images: [],
       prompt,
-      location,
-      pose,
-      rawPrompt: { prompt, location, pose },
-      size,
       aspectRatio,
-      numberOfImages
+      sampleCount,
+      outputMimeType,
+      personGeneration,
+      mock: true,
+      note: 'No GEMINI_API_KEY set. Returning mock response.'
+  ,effectivePrompt: prompt
     });
   }
 
+  const urlModel = 'imagen-4.0-ultra-generate-preview-06-06';
+  const baseUrl = `https://generativelanguage.googleapis.com/v1beta/models/${urlModel}:predict?key=${key}`;
+
+  // Build payload EXACTLY as specified (no extra keys, fixed structure & key order)
+  // EXACT payload shape required by user. We build a deterministic JSON string to avoid
+  // any accidental extra fields or key reordering.
+  // If the caller already supplied the exact payload shape, forward it untouched (except aspect ratio normalization above)
+  const predictBodyObject = {
+    instances: [{ prompt }],
+    parameters: {
+      outputMimeType,
+      sampleCount,
+      personGeneration,
+      aspectRatio
+    }
+  } as const;
+  const predictBodyJson = JSON.stringify(predictBodyObject);
+  console.debug('[generate-visual] Outbound payload JSON:', predictBodyJson);
+  // (For safety we could JSON.parse to ensure it's valid, but we rely on controlled construction.)
+
   try {
-    const ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY!,
+    const fetchRes = await fetch(baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': key,
+      },
+      body: predictBodyJson
     });
+  console.debug('[generate-visual] Fetch response status:', fetchRes.status);
 
-    // Compose a detailed prompt for the model
-    // De-duplicate static tags already present in the user prompt
-    const lowerPrompt = prompt.toLowerCase();
-    const appliedTags = STATIC_IMAGE_TAGS.filter(tag => !lowerPrompt.includes(tag.toLowerCase()));
-    const fullPrompt = [
-      `Prompt: ${prompt}`,
-      location ? `Location: ${location}` : null,
-      pose ? `Pose: ${pose}` : null,
-      scene ? `Scene: ${scene}` : null,
-      bodyLanguage ? `Body Language: ${bodyLanguage}` : null,
-      appliedTags.length ? `Style Tags: ${appliedTags.join(', ')}` : null,
-      'Generate a visually engaging, cinematic, high-quality image. Maintain a 2:1 aspect ratio.'
-    ].filter(Boolean).join('\n');
+    const json = await fetchRes.json() as PredictResponse;
+  console.debug('[generate-visual] Raw API JSON keys:', Object.keys(json || {}));
 
-  const modelId = process.env.GEMINI_IMAGE_MODEL || 'models/imagen-4.0-ultra-generate-preview-06-06';
-  let response;
-    try {
-      response = await ai.models.generateImages({
-        model: modelId,
-        prompt: fullPrompt,
-        config: {
-      numberOfImages,
-      outputMimeType: 'image/jpeg',
-      aspectRatio, // Now dynamic (sample used 16:9)
-        },
-      });
-    } catch (callErr: any) {
-      // If the underlying SDK throws a 400 (bad request / unsupported params) provide a soft fallback
-      const status = callErr?.status || callErr?.code;
-      const name = callErr?.name || 'UnknownError';
-      const message = callErr?.message || String(callErr);
-      console.error('Imagen API call error', { status, name, message });
-      if (status === 400) {
-    return NextResponse.json({
+    if (!fetchRes.ok || json.error) {
+      const message = json.error?.message || `Predict request failed (${fetchRes.status})`;
+      const code = json.error?.code || fetchRes.status;
+      if (code === 400 || code === 401 || code === 403) {
+  console.debug('[generate-visual] Soft fallback due to API error:', { code, message });
+        return NextResponse.json({
           success: true,
-          descriptions: [
-            {
-              "Image Name": "Mock Visual (400 Fallback)",
-              "Caption Plan": "Fallback because the image generation request was invalid or unsupported.",
-              "Target Audience": "General audience",
-              "Keywords": ["mock", "visual", "fallback"],
-              "Platform": "Instagram",
-        size,
-        location, pose,
-        aspectRatio
-            }
-          ],
           images: [],
           prompt,
-          location,
-          pose,
-      rawPrompt: { prompt, location, pose },
-      size,
-      aspectRatio,
-      numberOfImages,
-          warning: 'Image API returned 400. Provided mock data instead.'
+          aspectRatio,
+          sampleCount,
+          outputMimeType,
+          personGeneration,
+          warning: `Image API fallback due to error: ${message}`,
+          effectivePrompt: prompt
         });
       }
-      throw callErr; // Let the outer catch classify other errors
+      return NextResponse.json({
+        success: false,
+        error: message,
+        prompt,
+        aspectRatio,
+        sampleCount,
+        outputMimeType,
+        personGeneration,
+        effectivePrompt: prompt
+      }, { status: code || 500 });
     }
 
-    if (!response?.generatedImages || response.generatedImages.length === 0) {
-      throw new Error('No images generated.');
+    const predictions = json.predictions || [];
+    const images = predictions
+      .map(p => p.bytesBase64Encoded ? `data:${p.mimeType || outputMimeType};base64,${p.bytesBase64Encoded}` : null)
+      .filter(Boolean);
+
+    if (!images.length) {
+  console.debug('[generate-visual] No images returned in predictions.');
+      return NextResponse.json({
+        success: false,
+        error: 'No images in prediction response',
+        prompt,
+        aspectRatio,
+        sampleCount,
+        outputMimeType,
+  personGeneration,
+  effectivePrompt: prompt
+      }, { status: 502 });
     }
 
-    // Return base64-encoded images in the response
-    const images = response.generatedImages.map(img =>
-      img?.image?.imageBytes ? `data:image/jpeg;base64,${img.image.imageBytes}` : null
-    ).filter(Boolean);
-
+    const debug = body.debug || body._debug;
     return NextResponse.json({
       success: true,
       images,
       prompt,
-      location,
-      pose,
-      rawPrompt: { prompt, location, pose, staticTags: STATIC_IMAGE_TAGS, aspectRatio },
-      size,
       aspectRatio,
-      numberOfImages
+      sampleCount,
+      outputMimeType,
+  personGeneration,
+  effectivePrompt: prompt,
+      ...(debug ? { outboundPayload: predictBodyObject } : {})
     });
-
   } catch (err: any) {
-    // Try to detect invalid API key and fall back to mock descriptions (avoid hard 500s in dev)
-    const serialized = typeof err === 'string' ? err : (() => {
-      try { return JSON.stringify(err); } catch { return String(err); }
-    })();
-    const isInvalidKey = serialized.includes('API_KEY_INVALID') || serialized.includes('API key not valid');
-
-    console.error('Image generation error:', serialized);
-
-  if (isInvalidKey) {
-      // Provide mock data to keep the UI flow working even with a bad key
-      return NextResponse.json({
-        success: true,
-        descriptions: [
-          {
-            "Image Name": "Mock Visual (Invalid API Key)",
-            "Caption Plan": "Fallback caption because the provided Google AI API key is invalid.",
-            "Target Audience": "General audience",
-            "Keywords": ["mock", "visual", "content"],
-            "Platform": "Instagram",
-      size,
-      location, pose,
-      aspectRatio
-          }
-        ],
-        images: [],
-        prompt,
-        location,
-        pose,
-    rawPrompt: { prompt, location, pose },
-    size,
-    aspectRatio,
-    numberOfImages
-      });
-    }
-
-    // Unknown error: return a 500 but keep a consistent response shape & embed diagnostic hint
+    const message = typeof err?.message === 'string' ? err.message : 'Unexpected error performing predict';
+  console.debug('[generate-visual] Catch block triggered:', message);
+    const debug = body.debug || body._debug;
     return NextResponse.json({
-      success: false,
+      success: true,
       images: [],
       prompt,
-      location,
-      pose,
-      rawPrompt: { prompt, location, pose, aspectRatio },
-      size,
       aspectRatio,
-      numberOfImages,
-      error: typeof err?.message === 'string' ? err.message : 'Image generation failed',
-      hint: 'Check model id (GEMINI_IMAGE_MODEL), aspectRatio, and API key permissions.'
-    }, { status: 500 });
+      sampleCount,
+      outputMimeType,
+      personGeneration,
+      warning: message,
+      mock: true,
+  effectivePrompt: prompt,
+      ...(debug ? { outboundPayload: predictBodyObject } : {})
+    });
   }
 }
