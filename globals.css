@@ -1,5 +1,4 @@
 @import 'tailwindcss/tailwind.css';
-@plugin "daisyui";
 
 /* Artemis custom styles */
 .artemis-title {
@@ -13,4 +12,11 @@
 body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden; /* Prevent horizontal scroll on small devices */
 }
+
+/* Utility helpers for responsive truncation / wrapping */
+.break-words { word-wrap: break-word; overflow-wrap: anywhere; }
+

@@ -30,7 +30,7 @@ const StepCard = React.memo(({ step, onReset }: any) => {
   }, [step.icon]);
 
   return (
-    <section className="bg-white dark:bg-neutral-900 rounded-xl shadow-md border border-neutral-200 dark:border-neutral-800 p-6 mb-6 flex flex-col gap-4">
+  <section className="bg-white dark:bg-neutral-900 rounded-xl shadow-md border border-neutral-200 dark:border-neutral-800 p-4 sm:p-6 mb-6 flex flex-col gap-4">
       <header className="flex items-center justify-between mb-2">
         <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
           {iconElement}

@@ -85,7 +85,7 @@ const TopicAmplifier = React.memo(({
         <div className="card-body">
           <h2 className="card-title">Topic Amplifier</h2>
           <p>Enter a keyword to brainstorm new topics.</p>
-          <div className="flex gap-2 mb-2">
+      <div className="flex flex-col sm:flex-row gap-2 mb-2">
             <input
               type="text"
               placeholder="e.g., 'Excel automation'"
@@ -95,7 +95,7 @@ const TopicAmplifier = React.memo(({
               onKeyDown={handleKeyDown}
             />
             <button
-              className="btn btn-primary btn-sm"
+        className="btn btn-primary btn-sm w-full sm:w-auto"
               onClick={handleAmplifyClick}
               disabled={isDisabled}
             >

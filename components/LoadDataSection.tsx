@@ -37,7 +37,7 @@ const LoadDataSection = ({
             handleLoadData();
           }}
         />
-        <div className="flex gap-2 mb-2">
+  <div className="flex flex-wrap gap-2 mb-2">
           <button
             type="button"
             className="btn btn-info"
