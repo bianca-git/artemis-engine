@@ -118,11 +118,8 @@ export async function POST(request: Request) {
         if (ideasArray.length > 0) {
           // Build CSV with headers matching existing expectation
           // ID,TITLE,CONTENT,VISUAL (VISUAL left blank for now)
-          const csvRows = ideasArray.map((idea, idx) => {
-            const safe = idea.replace(/"/g, '""');
-            return `generated-${Date.now()}-${idx},"${safe}","",""`;
-          });
-          const csv = `ID,TITLE,CONTENT,VISUAL\n${csvRows.join('\n')}`;
+
+          const csv = `${ideasArray.join('\n')}`;
 
           const root = process.cwd();
           const publicCsvPath = path.join(root, 'public', 'defaultData.csv');

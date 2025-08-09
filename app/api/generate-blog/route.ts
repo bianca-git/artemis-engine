@@ -36,7 +36,8 @@ async function getDeveloperPrompt() {
 
 
 export async function POST(request: Request) {
-  const { topic, stream = false, model, verbosity, reasoningEffort, maxChars, full = false, includeRaw = false }: { topic: any; stream?: boolean; model?: string; verbosity?: 'low'|'medium'|'high'; reasoningEffort?: 'minimal'|'low'|'medium'|'high'; maxChars?: number; full?: boolean; includeRaw?: boolean } = await request.json();
+  const body = await request.json();
+  const { topic, content, stream = false, model, verbosity, reasoningEffort, maxChars, full = false, includeRaw = false } = body as { topic?: any; content?: any; stream?: boolean; model?: string; verbosity?: 'low'|'medium'|'high'; reasoningEffort?: 'minimal'|'low'|'medium'|'high'; maxChars?: number; full?: boolean; includeRaw?: boolean };
   const ip = (request.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'anon';
   const rl = checkRateLimit(`blog:${ip}`, 5, 60_000); // 5 blog generations per minute
   if (!rl.allowed) {
@@ -50,6 +51,34 @@ export async function POST(request: Request) {
     if (maxChars && maxChars > 0) return Math.min(Math.max(2000, maxChars), HARD_MAX_OUTPUT_CHARS);
     return DEFAULT_MAX_OUTPUT_CHARS;
   })();
+
+  // --- Normalization (simple & forgiving) ----------------------------------
+  // Accept nested topic object, string title, or legacy flattened fields.
+  const nested = (topic && typeof topic === 'object') ? topic : {};
+  const topicStr = typeof topic === 'string'
+    ? topic
+    : (typeof nested.TITLE === 'string' ? nested.TITLE : (typeof body.title === 'string' ? body.title : ''));
+  const contentStr = (() => {
+    if (typeof nested.CONTENT === 'string') return nested.CONTENT;
+    if (typeof content === 'string') return content;
+    if (typeof body.content === 'string') return body.content;
+    return '';
+  })();
+
+  if (!topicStr.trim() && !contentStr.trim()) {
+    const whimsical = `Testy McTestface blinked at the blank brief. With zero topic and nil content, the cosmos clearly craved improvisation. So Testy conjured a nano‑saga about nothing: a heroic semicolon that rescued a runaway loop, then moon‑walked into legend. (Next time, pick a topic and I’ll unleash a full Digital Diva deep‑dive.)`;
+    const portable = markdownToPortableText(whimsical, 'A Whimsical Interlude with Testy McTestface');
+    return NextResponse.json({
+      model: 'whimsy-local',
+      verbosity: 'low',
+      reasoningEffort: 'minimal',
+      portableText: portable,
+      raw: whimsical,
+      mode: 'whimsical'
+    });
+  }
+
+  const topicObj = { TITLE: topicStr, CONTENT: contentStr };
 
   if (stream) {
     const encoder = new TextEncoder();
@@ -86,7 +115,7 @@ export async function POST(request: Request) {
             model: ai.model,
             input: [
               { role: "developer", content: [ { type: "input_text", text: developerPrompt } ] },
-              { role: "user", content: [ { type: "input_text", text: buildUserPrompt(topic, requestedCap, full) } ] }
+              { role: "user", content: [ { type: "input_text", text: buildUserPromptDigitalDiva(topicObj, requestedCap, full) } ] }
             ],
             text: ai.text,
             tools: [],
@@ -165,7 +194,7 @@ export async function POST(request: Request) {
       : ai.reasoning;
     // Heuristic: approximate tokens ~ chars / 4
     const maxOutputTokens = Math.min(8192, Math.ceil(requestedCap / 4));
-    const response = await openaiClient.responses.create({
+  const response = await openaiClient.responses.create({
       model: ai.model,
       input: [
         {
@@ -173,8 +202,8 @@ export async function POST(request: Request) {
           content: [ { type: "input_text", text: developerPrompt } ]
         },
         {
-          role: "user",
-          content: [ { type: "input_text", text: buildUserPrompt(topic, requestedCap, full) } ]
+      role: "user",
+          content: [ { type: "input_text", text: buildUserPromptDigitalDiva(topicObj, requestedCap, full) } ]
         }
       ],
   text: ai.text,
@@ -188,9 +217,9 @@ export async function POST(request: Request) {
     if (rawContent.length > requestedCap) {
       rawContent = rawContent.slice(0, requestedCap) + "\n...[truncated]\n";
     }
-    const portableTextContent = markdownToPortableText(rawContent, topic?.TITLE || "");
+  const portableTextContent = markdownToPortableText(rawContent, topicObj?.TITLE || "");
 
-    logger.info('generate_blog_success', { ip, model: ai.model, titleLen: (topic?.TITLE || '').length });
+  logger.info('generate_blog_success', { ip, model: ai.model, titleLen: (topicObj?.TITLE || '').length });
     return NextResponse.json({
       model: ai.model,
       verbosity: ai.text.verbosity || 'medium',
@@ -338,13 +367,22 @@ function parseInlineMarkdown(text: string) {
 }
 
 // Build user prompt based on requested cap / full flag
-function buildUserPrompt(topic: any, requestedCap: number, full: boolean) {
-  const title = topic?.TITLE || '';
-  const base = `Write a detailed, well-structured blog post titled "${title}" using the following context: ${topic?.CONTENT || ''}.`;
-  if (full) {
-    return base + ' Provide comprehensive coverage; do not artificially shorten. Aim for natural completeness.';
-  }
-  // Convert char cap to an approximate word target (chars / 5) for model guidance
+function buildUserPromptDigitalDiva(topic: any, requestedCap: number, full: boolean) {
+  const title = (topic?.TITLE || '').trim();
+  const context = (topic?.CONTENT || '').trim();
   const approxWords = Math.round(requestedCap / 5);
-  return base + ` Keep output under ${requestedCap} characters (approx ${approxWords} words) without cutting mid-sentence.`;
+  const voice = `Write in the "Digital Diva" voice: confident, neon-cyber glam, sharp technical precision with playful edge, no fluff, no generic corporate filler. Prefer active voice, vivid metaphors (tasteful), and actionable guidance. Use UK spelling where natural.`;
+  const structure = `Structure: 1) Cold open hook (1-2 sentences). 2) Executive Snapshot (bullet list of 4–6 crisp value points). 3) Core Sections with h2/h3 headings (deep technical detail, code or pseudo-code where useful). 4) Performance & Security considerations. 5) Pitfalls & Anti-patterns. 6) Final Hardening Checklist (concise bullets).`;
+  const constraints = full
+    ? `Length: as comprehensive as necessary without bloat. Finish cleanly.`
+    : `Length cap: ~${requestedCap} characters (≈${approxWords} words). Do not cut mid-sentence; prioritise precision over breadth.`;
+  return [
+    `Title: ${title}`,
+    `Context: ${context}`,
+    voice,
+    structure,
+    constraints,
+    `Formatting: Use Markdown headings (##, ###). Use fenced code blocks for examples. Avoid excessive italics or ALL CAPS. No table unless critical.`,
+    `Output: Only the article body. Do NOT restate the instructions.`
+  ].filter(Boolean).join('\n');
 }
