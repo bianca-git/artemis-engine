@@ -199,7 +199,7 @@ function useArtemis() {
             const visualPayload = {
                 prompt: visualObj.prompt,
                 aspectRatio: visualObj.aspectRatio || "16:9",
-                sampleCount: 1,
+                sampleCount: visualObj.sampleCount ?? 1,
                 outputMimeType: "image/png",
                 personGeneration: "ALLOW_ADULT",
             };
