@@ -180,11 +180,11 @@ function useArtemis() {
     );
 
     // Example: Generate Visual
-    const generateVisual = useCallback(async (visualSource: string | { prompt: string; location?: string; pose?: string }, scene: string, bodyLanguage: string) => {
+    const generateVisual = useCallback(async (visualSource: string | { prompt: string; location?: string; pose?: string; aspectRatio?: string; sampleCount?: number; outputMimeType?: string; personGeneration?: string }, scene: string, bodyLanguage: string) => {
         ui.setIsLoadingVisual(true);
         ui.setVisualLoadingMessage("Generating image descriptions...");
         try {
-            let visualObj: { prompt: string; location?: string; pose?: string };
+            let visualObj: { prompt: string; location?: string; pose?: string; aspectRatio?: string; sampleCount?: number; outputMimeType?: string; personGeneration?: string };
             if (typeof visualSource === 'string') {
                 try {
                     visualObj = JSON.parse(visualSource);
