@@ -9,46 +9,46 @@ importers:
   .:
     dependencies:
       '@google/genai':
-        specifier: ^1.13.0
+        specifier: 1.13.0
         version: 1.13.0
       '@portabletext/react':
-        specifier: ^3.2.1
+        specifier: 3.2.1
         version: 3.2.1(react@19.1.1)
       '@portabletext/types':
-        specifier: ^2.0.13
+        specifier: 2.0.13
         version: 2.0.13
       '@sanity/client':
-        specifier: ^7.8.2
+        specifier: 7.8.2
         version: 7.8.2
       '@sanity/types':
-        specifier: ^4.3.0
+        specifier: 4.3.0
         version: 4.3.0(@types/react@19.1.9)
       '@tailwindcss/postcss':
-        specifier: ^4.1.11
+        specifier: 4.1.11
         version: 4.1.11
       '@vercel/analytics':
-        specifier: ^1.5.0
+        specifier: 1.5.0
         version: 1.5.0(next@15.4.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
       daisyui:
-        specifier: ^5.0.50
+        specifier: 5.0.50
         version: 5.0.50
       fs.promises:
-        specifier: ^0.1.2
+        specifier: 0.1.2
         version: 0.1.2
       googleapis:
-        specifier: ^155.0.1
+        specifier: 155.0.1
         version: 155.0.1
       lucide-react:
-        specifier: ^0.539.0
+        specifier: 0.539.0
         version: 0.539.0(react@19.1.1)
       marked:
-        specifier: ^16.1.2
+        specifier: 16.1.2
         version: 16.1.2
       next:
         specifier: 15.4.6
         version: 15.4.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       openai:
-        specifier: ^5.12.2
+        specifier: 5.12.2
         version: 5.12.2(ws@8.18.3)
       react:
         specifier: 19.1.1
@@ -57,17 +57,17 @@ importers:
         specifier: 19.1.1
         version: 19.1.1(react@19.1.1)
       tailwindcss:
-        specifier: ^4.1.11
+        specifier: 4.1.11
         version: 4.1.11
       uuid:
-        specifier: ^11.1.0
+        specifier: 11.1.0
         version: 11.1.0
     devDependencies:
       '@eslint/js':
-        specifier: ^9.33.0
+        specifier: 9.33.0
         version: 9.33.0
       '@portabletext/block-tools':
-        specifier: ^2.0.8
+        specifier: 2.0.8
         version: 2.0.8(@sanity/types@4.3.0(@types/react@19.1.9))(@types/react@19.1.9)
       '@types/node':
         specifier: 24.2.1
@@ -76,10 +76,10 @@ importers:
         specifier: 19.1.9
         version: 19.1.9
       jsdom:
-        specifier: ^26.1.0
+        specifier: 26.1.0
         version: 26.1.0
       rimraf:
-        specifier: latest
+        specifier: 6.0.1
         version: 6.0.1
       typescript:
         specifier: 5.9.2
