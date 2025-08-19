@@ -201,7 +201,7 @@ function useArtemis() {
                 aspectRatio: visualObj.aspectRatio || "16:9",
                 sampleCount: visualObj.sampleCount ?? 1,
                 outputMimeType: "image/png",
-                personGeneration: "ALLOW_ADULT",
+                personGeneration: visualObj.personGeneration ?? "ALLOW_ADULT",
             };
 
             const dataResult = await content.generateVisual(visualPayload, scene, bodyLanguage) as any;
