@@ -91,7 +91,7 @@ export function useArtemisContent() {
     const promptParts = [visual.prompt];
     if (scene) promptParts.push(`scene: ${scene}`);
     if (bodyLanguage) promptParts.push(`body language: ${bodyLanguage}`);
-    const fullPrompt = promptParts.join(', ');
+    const fullPrompt = promptParts.filter(Boolean).join(', ');
 
     // Construct EXACT shape expected by server / external API.
     const payload = {
