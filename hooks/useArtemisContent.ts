@@ -86,10 +86,16 @@ export function useArtemisContent() {
     }
   };
 
-  const generateVisual = async (visual: { prompt: string; aspectRatio?: string; sampleCount?: number; outputMimeType?: string; personGeneration?: string }, _scene?: string, _bodyLanguage?: string) => {
+  const generateVisual = async (visual: { prompt: string; aspectRatio?: string; sampleCount?: number; outputMimeType?: string; personGeneration?: string }, scene?: string, bodyLanguage?: string) => {
+    // Construct the full prompt from all available details
+    const promptParts = [visual.prompt];
+    if (scene) promptParts.push(`scene: ${scene}`);
+    if (bodyLanguage) promptParts.push(`body language: ${bodyLanguage}`);
+    const fullPrompt = promptParts.join(', ');
+
     // Construct EXACT shape expected by server / external API.
     const payload = {
-      instances: [ { prompt: visual.prompt } ],
+      instances: [ { prompt: fullPrompt } ],
       parameters: {
         outputMimeType: visual.outputMimeType || 'image/png',
         sampleCount: visual.sampleCount ?? 1,
