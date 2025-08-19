@@ -198,7 +198,7 @@ function useArtemis() {
 
             const visualPayload = {
                 prompt: visualObj.prompt,
-                aspectRatio: "16:9",
+                aspectRatio: visualObj.aspectRatio || "16:9",
                 sampleCount: 1,
                 outputMimeType: "image/png",
                 personGeneration: "ALLOW_ADULT",
