@@ -195,7 +195,16 @@ function useArtemis() {
                 visualObj = visualSource;
             }
             if (!visualObj.prompt) visualObj.prompt = '';
-            const dataResult = await content.generateVisual(visualObj, scene, bodyLanguage) as any;
+
+            const visualPayload = {
+                prompt: visualObj.prompt,
+                aspectRatio: "16:9",
+                sampleCount: 1,
+                outputMimeType: "image/png",
+                personGeneration: "ALLOW_ADULT",
+            };
+
+            const dataResult = await content.generateVisual(visualPayload, scene, bodyLanguage) as any;
             setVisualDescriptions(dataResult.descriptions || []);
             setWorkflowState((prev) => ({ ...prev, visual: true }));
         } catch (e) {
